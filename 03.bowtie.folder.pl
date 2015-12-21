@@ -108,7 +108,7 @@ foreach my $db (@dbs){
 	my @R3 = ();
 	my @R4 = ();
 	foreach my $sub (@subs){
-		if($sub =~ /F$/){
+		if($sub =~ /F$|Fu$|R$/){
 			my $new = "$qryfolder/$sub/$sub.fna";
 			push @R4, $new;
 		}else{
@@ -121,7 +121,7 @@ foreach my $db (@dbs){
 		}
 	}
 	my $unmap = "--no-unal";
-	if($run eq "run.0"){$unmap = "";}
+	#if($run eq "run.0"){$unmap = "";}
 	
 	if($mode eq "end-to-end"){
 		print SHL "time bowtie2 -f -x $dbfolder/$db/$db $unmap -p $thread -1 ", join(",", @R1), " -2 ", join(",", @R2), " -U ", join(",", @R3), " -S $tgtfolder/$db/bowtie.out.$db.sam\n";

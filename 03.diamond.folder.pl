@@ -55,7 +55,7 @@ foreach my $db (@dbs){
 
 		print SHL "mkdir -p $tgtfolder/$db\n";
 		
-		if($sub =~ /F$/){
+		if($sub =~ /F$|Fu$|R$/){
 			print SHL "time $command2/diamond blastx -p $thread -k 1 -e 1e-10 -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub\n";
 			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.tab -f tab\n";
 			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.daa\n";

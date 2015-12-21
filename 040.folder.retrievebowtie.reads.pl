@@ -63,9 +63,9 @@ close QRY;
 
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
-if($run eq '0' and $scale eq 'genome'){	# assemble unmapped reads in the first run
-	push @subs, 99999;
-}
+#if($run eq '0' and $scale eq 'genome'){	# assemble unmapped reads in the first run
+#	push @subs, 99999;
+#}
 
 system("mv bowtie.* 00.script/$logfolder");
 system("rm -rf 00.script/shell.script.previous");
@@ -97,7 +97,7 @@ foreach my $sub (@subs){
 	my @tempsams = @sams;
 	if($sub ne "99999"){
 		foreach my $sam (@tempsams){
-			if($sam =~ /F$/) { ## 454 data
+			if($sam =~ /F$|Fu$|R$/) { ## 454 data
 				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.tab 01.data/02.Fasta/$sam/$sam.simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
 			}else{
 				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.R1.tab 01.data/02.Fasta/$sam/$sam.R1.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
@@ -107,7 +107,7 @@ foreach my $sub (@subs){
 		}
 	}else{
 		foreach my $sam (@tempsams){
-			if($sam =~ /F$/){
+			if($sam =~ /F$|Fu$|R$/){
 				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam F 01.data/02.Fasta/$sam/$sam.simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
 			}else{
 				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam R1 01.data/02.Fasta/$sam/$sam.R1.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";

@@ -20,7 +20,7 @@ foreach my $line (<SRC>){
 		my @lines = split(/\s+/, $line);
 		if($contig ne 0){
 			my $pergc = sprintf "%.2f", $gc/$len*100;
-			$pre = $contig."|GC=".$pergc;
+			$pre = $contig." GC=".$pergc;
 			print TGT "$pre\n";
 			print TGT join("\n", @seq), "\n";
 		}
@@ -36,7 +36,7 @@ foreach my $line (<SRC>){
 }
 
 my $pergc = sprintf "%.2f", $gc/$len*100;
-$pre = $contig."|GC=".$pergc;
+$pre = $contig." GC=".$pergc;
 print TGT "$pre\n";
 print TGT join("\n", @seq), "\n";
 

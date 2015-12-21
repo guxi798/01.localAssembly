@@ -36,7 +36,9 @@ time perl 00.script/01.fastq2fasta.folder.pl 01.data/01.Fastq 01.data/02.Fasta 1
 time perl 00.script/01.folder.fastaCombinePairedEnd.pl  01.data/02.Fasta 60
 time perl 00.script/01.folder.IDConverter.pl  01.data/02.Fasta
 
-###################################################l
+###################################################
+platform="Sapelo"
+
 a=-1
 while [ $a -le 20 ]
 do
@@ -44,17 +46,17 @@ do
     echo "The run: $b" >> job.monitor.txt
 
     if [ $b -eq 0 ];then
-        time perl 00.script/03.diamond.folder.pl 01.data/02.Fasta 01.data/05.splitGenes/01.Protein/run.$b 03.blast/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b
-        time perl 00.script/040.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.$b 04.retrieve.reads/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b 1000 20
+        time perl 00.script/03.diamond.folder.pl 01.data/02.Fasta 01.data/05.splitGenes/01.Protein/run.$b 03.blast/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b $platform
+        time perl 00.script/040.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.$b 04.retrieve.reads/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b 1000 $platform 20
     else
         time perl 00.script/021.makebowtiedb.folder.pl 01.data/05.splitGenes/02.Transcript/run.$b 10
-        time perl 00.script/03.bowtie.folder.pl 01.data/02.Fasta 01.data/05.splitGenes/02.Transcript/run.$b 03.blast/03.bowtie.nucl/run.$b nucl local bowtie.log/bowtie.run.$b 10
-        time perl 00.script/04.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.$b 04.retrieve.reads/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b 20
+        time perl 00.script/03.bowtie.folder.pl 01.data/02.Fasta 01.data/05.splitGenes/02.Transcript/run.$b 03.blast/03.bowtie.nucl/run.$b nucl local bowtie.log/bowtie.run.$b $platform 10
+        time perl 00.script/04.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.$b 04.retrieve.reads/03.bowtie.nucl/run.$b nucl bowtie.log/bowtie.run.$b $platform 20
     fi
 
-    time perl 00.script/06.assembly.trinity.folder.pl 04.retrieve.reads/03.bowtie.nucl/run.$b 06.assembly/03.bowtie.nucl/run.$b 60
-    time perl 00.script/06.truncate.header.folder.pl 06.assembly/03.bowtie.nucl/run.$b/01.trinity 600
-    time perl 00.script/07.blastx.back.pl 06.assembly/03.bowtie.nucl/run.$b/01.trinity 01.data/05.splitGenes/01.Protein/run.0 07.map.back/03.bowtie.nucl/run.$b 600
+    time perl 00.script/06.assembly.trinity.folder.pl 04.retrieve.reads/03.bowtie.nucl/run.$b 06.assembly/03.bowtie.nucl/run.$b $platform 60
+    time perl 00.script/06.truncate.header.folder.pl 06.assembly/03.bowtie.nucl/run.$b/01.trinity $platform 600
+    time perl 00.script/07.blastx.back.pl 06.assembly/03.bowtie.nucl/run.$b/01.trinity 01.data/05.splitGenes/01.Protein/run.0 07.map.back/03.bowtie.nucl/run.$b $platform 600
     
     if [ $b -gt 0 ];then
         time perl 00.script/08.folder.summarize.blastx.pl 07.map.back/03.bowtie.nucl/run.$a 07.map.back/03.bowtie.nucl/run.$b 08.evaluate/03.bowtie.nucl/run.$b 10

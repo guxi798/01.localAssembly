@@ -37,7 +37,7 @@ foreach my $sub (@subs){
    
     print SHL "\n";
     print SHL "cd \$PBS_O_WORKDIR\n";
-	if($sub =~ /F$/){
+	if($sub =~ /F$|Fu$|R$/){
     	print SHL "time cat $srcfolder/$sub/$sub.fna | awk '{if(\$_ ~ /^>/){count++; print \">\"count} else{print \$_}}' > $srcfolder/$sub/$sub.simple.fasta\n";
     }else{
 		print SHL "time cat $srcfolder/$sub/$sub.R1.fasta_pairs_R1.fasta | awk '{if(NR%2==0){print \$_} else{print \">\"NR/2+0.5}}' > $srcfolder/$sub/$sub.R1.fasta_simple.fasta\n";

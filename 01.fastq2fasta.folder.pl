@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# run the script: time perl 00.script/01.fastq2fasta.folder.pl 01.data/01.Fastq 01.data/02.Fasta Sapelo
 
 use strict;
 system("echo 'Running 01.fastq2fasta.folder.pl ....' >> job.monitor.txt");
@@ -38,11 +39,14 @@ foreach my $sub (@subs){
     print SHL "cd \$PBS_O_WORKDIR\n";
 
 	print SHL "mkdir -p $tgtfolder/$sub\n";
-	if($sub =~ /F$/){
+	if($sub =~ /F$|Fu$|R$/){
 		print SHL "cp $srcfolder/$sub/$sub.fna $tgtfolder/$sub/\n";
 	}else{
-		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta\n";
-		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R2.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R2.fasta\n";
+		#print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq_pairs_R1.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta_pairs_R1.fasta\n";
+		#print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R2.fastq_pairs_R2.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R2.fasta_pairs_R2.fasta\n";
+		#print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq_singles.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta_singles.fasta\n";
+		print SHL "sed -i \"s/\\/1//g\" $tgtfolder/$sub/$sub.R1.fasta_singles.fasta\n";
+		print SHL "sed -i \"s/\\/2//g\" $tgtfolder/$sub/$sub.R1.fasta_singles.fasta\n";
 	}
 	
 	close(SHL);

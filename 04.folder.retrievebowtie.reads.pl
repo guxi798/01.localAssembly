@@ -81,7 +81,7 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -N 00.script/shell.script/retrievebowtie.reads.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
-	    print SHL "#PBS -l pvmem=20gb\n";
+	    print SHL "#PBS -l mem=30gb\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{

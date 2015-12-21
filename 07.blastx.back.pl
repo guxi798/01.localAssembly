@@ -45,7 +45,7 @@ while(1){
 				if(!(-s "$srcfolder/$chk/Trinity.new.fasta")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
 					system("rm -f truncate.header.$chk.*");
-					system("echo 'Resubmitting the job: truncate.header.$$chk.sh' >> job.monitor.txt");
+					system("echo 'Resubmitting the job: truncate.header.$chk.sh' >> job.monitor.txt");
 					system("qsub 00.script/shell.script/truncate.header.$chk.sh");
 					#last; # There are some jobs failed
 				}

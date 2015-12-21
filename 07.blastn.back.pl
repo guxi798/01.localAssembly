@@ -8,8 +8,8 @@ system("echo 'Running 07.blastx.back.pl ....' >> job.monitor.txt");
 my $srcfolder = shift @ARGV;
 my $dbfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
-my $sleeptime = shift @ARGV;
 my $platform = lc(shift @ARGV);
+my $sleeptime = shift @ARGV;
 my ($run) = $srcfolder =~ /(run\.[0-9]+)/;
 my $thread = 1;
 
@@ -50,6 +50,7 @@ foreach my $sub (@subs){
 	}
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	print SHL "time $command1/blastn -db $dbfolder/$sub/$sub.fasta -query $srcfolder/$sub/Trinity.new.fasta -out $tgtfolder/$sub/$sub.contigs.blast.out -evalue 1e-10  -outfmt 6 -num_threads 1 -max_target_seqs 1\n ";
+	print SHL "time $command1/blastn -db $dbfolder/$sub/$sub.fasta -query $srcfolder/$sub/Trinity.new.fasta -out $tgtfolder/$sub/$sub.contigs.blast.xml.out -evalue 1e-10  -outfmt 5 -num_threads 1 -max_target_seqs 1\n ";
 	
 	close(SHL);
 	system("chmod u+x $shell");

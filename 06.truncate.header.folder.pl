@@ -6,13 +6,13 @@ system("echo 'Running 06.truncate.header.folder.pl ....' >> job.monitor.txt");
 
 ## read in parameters required by the script
 my $srcfolder = shift @ARGV;
-my $sleeptime = shift @ARGV;
 my $platform = lc(shift @ARGV);
+my $sleeptime = shift @ARGV;
 my ($run) = $srcfolder =~ /(run\.[0-9]+)/;
 my $thread = 1;
 
 ## check if previous step has succesfully finished
-my $reffolder = "01.data/05.splitGenes/02.Transcript/run.0";
+my $reffolder = "01.data/05.splitGenes/01.Protein/run.0";
 opendir(CHK, $reffolder) or die "ERROR: Cannot open $reffolder: $!";
 my @chks = sort(grep(/^[0-9]+/, readdir(CHK)));
 #if($run eq 'run.0'){
@@ -22,7 +22,7 @@ while(1){
 	my $count = 0;
 	my @temp = @chks;
 	my $i = 0;
-	print "I'm here\n";
+	#print "I'm here\n";
 	while(my $chk = shift @temp){
 		my @stderr = glob("assembly.trinity.$chk.o*");
 		my @stdout = glob("assembly.trinity.$chk.e*");

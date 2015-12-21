@@ -56,6 +56,27 @@ class Fasta(object):
         #handle.write(self.name2 + "\n")
         #handle.write(self.qual + "\n")
 
+class Fastq(object):
+    """Fastq object with name and sequence
+    """
+
+    def __init__(self, name, seq, name2, qual):
+        self.name = name
+        self.seq = seq
+        self.name2 = name2
+        self.qual = qual
+
+    def getShortname(self, separator):
+        self.temp = self.name.split(separator)
+        del(self.temp[-1])
+        return separator.join(self.temp)
+
+    def write_to_file(self, handle):
+        handle.write(self.name + "\n")
+        handle.write(self.seq + "\n")
+        handle.write(self.name2 + "\n")
+        handle.write(self.qual + "\n")
+
 # Defining functions
 def myopen(infile, mode="r"):
     if infile.endswith(".gz"):
@@ -78,19 +99,36 @@ def fasta_parser(infile):
             #qual = f.readline().strip()
             yield Fasta(name, seq)#, name2, qual)
 
+def fastq_parser(infile):
+    """Takes a fastq file infile and returns a fasta object iterator
+    """
+    
+    with myopen(infile) as f:
+        while True:
+            name = f.readline().strip()
+            if not name:
+                break
+
+            seq = f.readline().strip()
+            name2 = f.readline().strip()
+            qual = f.readline().strip()
+            yield Fastq(name, seq, name2, qual)
+
 # Main
 if __name__ == "__main__":
     seq1_dict = {}
     seq2_dict = {}
-    seq1 = fasta_parser(in1)
-    seq2 = fasta_parser(in2)
+    #seq1 = fasta_parser(in1)
+    #seq2 = fasta_parser(in2)
+    seq1 = fastq_parser(in1)
+    seq2 = fastq_parser(in2)
     s1_finished = False
     s2_finished = False
 
     if in1.endswith('.gz'): 
-        outSuffix='.fasta.gz'
+        outSuffix='.fastq.gz'
     else:
-        outSuffix='.fasta'
+        outSuffix='.fastq'
         
     with myopen(in1 + "_pairs_R1" + outSuffix, "w") as out1:
         with myopen(in2 + "_pairs_R2" + outSuffix, "w") as out2:

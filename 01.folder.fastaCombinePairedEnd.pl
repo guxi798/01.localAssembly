@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/01.folder.fastaCombinePairedEnd.pl  01.data/02.Fasta Sapelo
+# run the script: time perl 00.script/01.folder.fastaCombinePairedEnd.pl  01.data/01.Fastq Sapelo
 
 use strict;
 system("echo 'Running 01.folder.fastaCombinePairedEnd.pl ....' >> job.monitor.txt");
@@ -19,7 +19,7 @@ opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/\w+/, readdir(SRC)));
 			
 foreach my $sub (@subs){
-	if($sub =~ /F$/){
+	if($sub =~ /F$|Fu$|R$/){
 		next;
 	}
 	my $shell = "00.script/shell.script/fastaCombinePairedEnd.$sub.sh";
@@ -47,7 +47,7 @@ foreach my $sub (@subs){
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-	print SHL "time python 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fasta $srcfolder/$sub/$sub.R2.fasta\n";
+	print SHL "time python 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fastq $srcfolder/$sub/$sub.R2.fastq /\n";
 	
 	close SHL;
 	
