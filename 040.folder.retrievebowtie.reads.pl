@@ -68,19 +68,18 @@ my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 #}
 
 system("mv bowtie.* 00.script/$logfolder");
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("rm -rf 00.script/04.retrieve.script/run.$run");
+system("mkdir -p 00.script/04.retrieve.script/run.$run");
 system("rm -rf $tgtfolder");
 
 foreach my $sub (@subs){
-	my $shell = "00.script/shell.script/retrievebowtie.reads.$sub.sh";
+	my $shell = "00.script/04.retrieve.script/run.$run/retrievebowtie.reads.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/retrievebowtie.reads.$sub\n";
+	    print SHL "#PBS -N retrievebowtie.reads.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
 	    print SHL "#PBS -l mem=30gb\n";

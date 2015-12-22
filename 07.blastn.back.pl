@@ -10,25 +10,24 @@ my $dbfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
-my ($run) = $srcfolder =~ /(run\.[0-9]+)/;
+my ($run) = $srcfolder =~ /run\.([0-9]+)/;
 my $thread = 1;
 
 ## start running the script
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("rm -rf 00.script/07.blastn.script/run.$run");
+system("mkdir -p 00.script/07.blastn.script/run.$run");
 
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 foreach my $sub (@subs){
 	if($sub eq '99999'){next;}
-	my $shell = "00.script/shell.script/blastn.back.$sub.sh";
+	my $shell = "00.script/07.blastn.script/run.$run/blastn.back.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
     if($platform eq "sapelo"){
     	print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/blastn.back.$sub\n";
+	    print SHL "#PBS -N blastn.back.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";

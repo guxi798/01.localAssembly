@@ -8,14 +8,14 @@ system("echo 'Running 06.truncate.header.folder.pl ....' >> job.monitor.txt");
 my $srcfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
-my ($run) = $srcfolder =~ /(run\.[0-9]+)/;
+my ($run) = $srcfolder =~ /run\.([0-9]+)/;
 my $thread = 1;
 
 ## check if previous step has succesfully finished
 my $reffolder = "01.data/05.splitGenes/01.Protein/run.0";
 opendir(CHK, $reffolder) or die "ERROR: Cannot open $reffolder: $!";
 my @chks = sort(grep(/^[0-9]+/, readdir(CHK)));
-#if($run eq 'run.0'){
+#if($run == run.0){
 	#push @chks, 99999;
 #}
 while(1){
@@ -29,14 +29,14 @@ while(1){
 		if(!($stderr[0] and $stdout[0])){
 			last; # job hasn't finished, no log file
 		}else{
-			system("grep -E 'ERROR|Error|error' assembly.trinity.$chk.e* >> 00.script/trinity.script/$run/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' assembly.trinity.$chk.e* >> 00.script/06.trinity.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/assembly.trinity.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
 	}
 	@temp = @chks;
 	if($count == scalar @chks){ # all jobs have finished
-		if(!-s "00.script/trinity.script/$run/summary.error.log"){ # check if all jobs are successful
+		if(!-s "00.script/06.trinity.script/run.$run/summary.error.log"){ # check if all jobs are successful
 			system("echo 'There is no error for all jobs' >> job.monitor.txt");
 			while(my $chk = shift @temp){
 				if(!(-e "$srcfolder/$chk/Trinity.fasta")){
@@ -44,7 +44,7 @@ while(1){
 					#system("rm -f assembly.trinity.$chk.*");
 					#system("rm -r $srcfolder/$chk");
 					system("echo 'Resubmitting the job: assembly.trinity.$chk.sh' >> job.monitor.txt");
-					#system("qsub 00.script/trinity.script/$run/assembly.trinity.$chk.sh");
+					system("qsub 00.script/06.trinity.script/run.$run/assembly.trinity.$chk.sh");
 					#last; # There are some jobs failed
 				}
 				else{
@@ -67,22 +67,21 @@ close CHK;
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
-system("mv assembly.trinity.* 00.script/trinity.script/$run/");
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("mv assembly.trinity.* 00.script/06.trinity.script/run.$run/");
+system("rm -rf 00.script/06.truncate.script/run.$run");
+system("mkdir -p 00.script/06.truncate.script/run.$run");
 
 foreach my $sub (@subs){
 	if($sub eq '99999'){
 		next;
 	}
-	my $shell = "00.script/shell.script/truncate.header.$sub.sh";
+	my $shell = "00.script/06.truncate.script/run.$run/truncate.header.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/truncate.header.$sub\n";
+	    print SHL "#PBS -N truncate.header.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";

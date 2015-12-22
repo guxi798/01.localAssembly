@@ -14,9 +14,9 @@ my $reffile = shift @ARGV;				## reference file with gene ID and protein length 
 my $mode = shift @ARGV;					## abs: absolute value; pct: percent value
 my $cutoff = shift @ARGV;				## absolute AA number, or percent
 my $sleeptime = shift @ARGV;
-my $errfile = "00.script/shell.script/transfer.saturate.seq.e";
-my $outfile = "00.script/shell.script/transfer.saturate.seq.o";
-my ($run) = $srcfolder =~ /\/(run\.[0-9]+)/;
+my ($run) = $srcfolder =~ /\/run\.([0-9]+)/;
+my $errfile = "00.script/10.transfer.script/run.$run/transfer.saturate.seq.e";
+my $outfile = "00.script/10.transfer.script/run.$run/transfer.saturate.seq.o";
 
 #=pod
 ## check if previous step has succesfully finished
@@ -33,21 +33,21 @@ while(1){
 		if(!($stderr[0] and $stdout[0])){
 			last; # job hasn't finished, no log file
 		}else{
-			system("grep -E 'ERROR|Error|error' blastx.back.$chk.e* >> 00.script/shell.script/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' blastx.back.$chk.e* >> 00.script/07.blastx.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/blastx.back.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
 	}
 	@temp = @chks;
 	if($count == scalar @chks){ # all jobs have finished
-		if(!-s "00.script/shell.script/summary.error.log"){ # check if all jobs are successful
+		if(!-s "00.script/07.blastx.script/run.$run/summary.error.log"){ # check if all jobs are successful
 			system("echo 'There is no error for all jobs' >> job.monitor.txt");
 			while(my $chk = shift @temp){
 				if(!(-s "$blastfolder/$chk/$chk.contigs.blast.out")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
 					system("rm -f blastx.back.$chk.*");
 					system("echo 'Resubmitting the job: truncate.header.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/shell.script/blastx.back.$chk.sh");
+					system("qsub 00.script/07.blastx.script/run.$run/blastx.back.$chk.sh");
 					#last; # There are some jobs failed
 				}
 				else{
@@ -69,11 +69,10 @@ close CHK;
 #=cut
 
 ## start running the script
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
-
-system("mv blastx.back.* 00.script/shell.script/");
+system("mv blastx.back.* 00.script/07.blastx.script/run.$run/");
+system("mv blastn.back.* 00.script/07.blastn.script/run.$run/");
+system("rm -rf 00.script/10.transfer.script/run.$run");
+system("mkdir -p 00.script/10.transfer.script/run.$run");
 system("mkdir -p $tgtfolder");
 
 opendir(SRC, $blastfolder) or die "ERROR: Cannot open $blastfolder: $!";
@@ -126,8 +125,8 @@ close ERR;
 close OUT;
 close SRC;
 
-system("grep -E 'ERROR|Error|error' 00.script/shell.script/transfer.saturate.seq.e > 00.script/shell.script/summary.error.log");
-system("echo 'success' > 00.script/shell.script/transfer.saturate.seq.log");
+system("grep -E 'ERROR|Error|error' 00.script/10.transfer.script/run.$run/transfer.saturate.seq.e > 00.script/10.transfer.script/run.$run/summary.error.log");
+system("echo 'success' > 00.script/10.transfer.script/run.$run/transfer.saturate.seq.log");
 
 system("echo 'Finished 10.transfer.saturate.seq.pl!' >> job.monitor.txt");
 

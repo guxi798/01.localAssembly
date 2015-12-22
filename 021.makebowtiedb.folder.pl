@@ -7,14 +7,16 @@ system("echo 'Running 021.makebowtieb.folder.pl ....' >> job.monitor.txt");
 my $tgtfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
+my ($run) = $tgtfolder =~ /\/run\.([0-9]+)/;
+my $prerun = $run - 1;
 my $thread = 1;
 
 ## check if previous step has succesfully finished
 while(1){
-	if(!(-e "00.script/shell.script/transfer.saturate.seq.log")){
+	if(!(-e "00.script/10.transfer.script/run.$prerun/transfer.saturate.seq.log")){
 		sleep $sleeptime; # job hasn't finished, no log file
 	}else{ # job has finished
-		if(!-s "00.script/shell.script/summary.error.log"){ # check if all jobs are successful
+		if(!-s "00.script/10.transfer.script/run.$prerun/summary.error.log"){ # check if all jobs are successful
 			print "All jobs have been finished successfully\n"; # error file is empty
 			last;
 		}else{
@@ -27,17 +29,16 @@ while(1){
 opendir(SRC, $tgtfolder) or die "ERROR: Cannot open $tgtfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("rm -rf 00.script/02.makebowtiedb.script/run.$run");
+system("mkdir -p 00.script/02.makebowtiedb.script/run.$run");
 
 foreach my $sub (@subs){
-	my $shell = "00.script/shell.script/makebowtiedb.$sub.sh";
+	my $shell = "00.script/02.makebowtiedb.script/run.$run/makebowtiedb.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/makebowtiedb.$sub\n";
+	    print SHL "#PBS -N makebowtiedb.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";

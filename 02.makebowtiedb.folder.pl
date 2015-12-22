@@ -9,24 +9,24 @@ my $srcfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
 my $thread = 1;
+my ($run) = $srcfolder =~ /run\.([0-9]+)/;
 
 ## start running the script
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("rm -rf 00.script/02.makebowtiedb.script/run.$run");
+system("mkdir -p 00.script/02.makebowtiedb.script/run.$run");
 
 foreach my $sub (@subs){
-	my $shell = "00.script/shell.script/makebowtiedb.$sub.sh";
+	my $shell = "00.script/02.makebowtiedb.script/run.$run/makebowtiedb.$sub.sh";
 	my $base = $sub;
 	$base =~ s/\.fasta//;
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/makebowtiedb.$sub\n";
+	    print SHL "#PBS -N makebowtiedb.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";

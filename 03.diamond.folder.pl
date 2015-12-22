@@ -11,6 +11,7 @@ my $tgtfolder = shift @ARGV;
 my $seqtype = shift @ARGV;
 my $logfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
+my ($run) = $tgtfolder =~ /run\.([0-9]+)/;
 my $thread = 4;
 
 ## start running the script
@@ -31,7 +32,7 @@ foreach my $db (@dbs){
 		if($platform eq "sapelo"){
 			print SHL "#PBS -S /bin/bash\n";
 			print SHL "#PBS -q batch\n";
-			print SHL "#PBS -N 00.script/$logfolder/bowtie.$seqtype.$db.$sub\n";
+			print SHL "#PBS -N bowtie.$seqtype.$db.$sub\n";
 			print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 			print SHL "#PBS -l walltime=48:00:00\n";
 			print SHL "#PBS -l mem=30gb\n";

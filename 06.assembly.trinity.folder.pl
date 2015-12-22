@@ -10,7 +10,7 @@ my $tgtfolder = shift @ARGV;
 my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
-my ($run) = $tgtfolder =~ /(run\.[0-9]+)/;
+my ($run) = $tgtfolder =~ /run\.([0-9]+)/;
 my $thread = 8;
 my $memory = 80;
 
@@ -20,7 +20,7 @@ opendir(CHK, $reffolder) or die "ERROR: Cannot open $reffolder: $!";
 my @chks = sort(grep(/^[0-9]+/, readdir(CHK)));
 
 =pod
-if($run eq 'run.0' and $mode eq 'genome'){
+if($run == 0 and $mode eq 'genome'){
 	my @temp = @chks;
 	my @R1 = ();
 	my @R2 = ();
@@ -53,21 +53,21 @@ while(1){
 			last; # job hasn't finished, no log file
 		}else{
 			#print "$stderr[0]\n$stdout[0]\n";
-			system("grep -E 'ERROR|Error|error' retrievebowtie.reads.$chk.e* >> 00.script/shell.script/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' retrievebowtie.reads.$chk.e* >> 00.script/04.retrieve.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/retrievebowtie.reads.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
 	}
 	@temp = @chks;
 	if($count == scalar @chks){ # all jobs have finished
-		if(!-s "00.script/shell.script/summary.error.log"){ # check if all jobs are successful
+		if(!-s "00.script/04.retrieve.script/run.$run/summary.error.log"){ # check if all jobs are successful
 			system("echo 'There is no error for all jobs' >> job.monitor.txt");
 			while(my $chk = shift @temp){
 				if(!(-s "$srcfolder/$chk/retrieved.$chk.R1.fasta" and -s "$srcfolder/$chk/retrieved.$chk.R2.fasta")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
 					system("rm -f retrievebowtie.reads.$chk.*");
 					system("echo 'Resubmitting the job: retrievebowtie.reads.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/shell.script/retrievebowtie.reads.$chk.sh");
+					system("qsub 00.script/04.retrieve.script/run.$run/retrievebowtie.reads.$chk.sh");
 						#last; # There are some jobs failed
 				}
 				else{
@@ -90,19 +90,18 @@ close CHK;
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
-system("mv retrievebowtie.reads.* 00.script/shell.script/");
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/trinity.script/$run");
+system("mv retrievebowtie.reads.* 00.script/04.retrieve.script/run.$run/");
+system("rm -rf 00.script/06.trinity.script/run.$run");
+system("mkdir -p 00.script/06.trinity.script/run.$run");
 
 foreach my $sub (@subs){
-	my $shell = "00.script/trinity.script/$run/assembly.trinity.$sub.sh";
+	my $shell = "00.script/06.trinity.script/run.$run/assembly.trinity.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/assembly.trinity.$sub\n";
+	    print SHL "#PBS -N assembly.trinity.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=48:00:00\n";
 	    print SHL "#PBS -l mem=",$memory,"gb\n";

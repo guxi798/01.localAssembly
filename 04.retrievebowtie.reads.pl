@@ -7,8 +7,8 @@ use strict;
 my $srcfile = shift @ARGV;
 my $mode = shift @ARGV;
 my $tgtfile1 = shift @ARGV;
-my $tgtfile2 = shift @ARGV;
 my $unmapfile1 = shift @ARGV; 
+my $tgtfile2 = shift @ARGV;
 my $unmapfile2 = shift @ARGV;
 my ($run) = $srcfile =~ /run\.([0-9]+)/;
 my $oldrun = $run - 1;
@@ -48,8 +48,8 @@ if($run != 0){
 		chomp $line;
 		$line =~ s/^>//;
 		$line =~ s/\/1$//;
+		my $seq = <OLD1>;
 		if(not exists $hash1{$line}){
-			my $seq = <OLD1>;
 			chomp $seq;
 			$hash1{$line} = $seq;
 			print TGT1 ">$line/1\n$seq\n";
@@ -61,8 +61,8 @@ if($run != 0){
 			chomp $line;
 			$line =~ s/^>//;
 			$line =~ s/\/2$//;
+			my $seq = <OLD2>;
 			if(not exists $hash2{$line}){
-				my $seq = <OLD2>;
 				chomp $seq;
 				$hash2{$line} = $seq;
 				print TGT2 ">$line/2\n$seq\n";

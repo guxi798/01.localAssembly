@@ -11,7 +11,7 @@ my $seqtype = shift @ARGV;
 my $logfolder = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
-my ($run) = $tgtfolder =~ /(run\.[0-9]+)/;
+my ($run) = $tgtfolder =~ /run\.([0-9]+)/;
 my $thread = 1; 
 
 ## check if previous step has succesfully finished
@@ -67,21 +67,20 @@ opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 system("mv bowtie.* 00.script/$logfolder");
-system("rm -rf 00.script/shell.script.previous");
-system("mv 00.script/shell.script 00.script/shell.script.previous");
-system("mkdir -p 00.script/shell.script");
+system("rm -rf 00.script/04.retrieve.script/run.$run");
+system("mkdir -p 00.script/04.retrieve.script/run.$run");
 
 foreach my $sub (@subs){
-	my $shell = "00.script/shell.script/retrievebowtie.reads.$sub.sh";
+	my $shell = "00.script/04.retrieve.script/run.$run/retrievebowtie.reads.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
  	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N 00.script/shell.script/retrievebowtie.reads.$sub\n";
+	    print SHL "#PBS -N retrievebowtie.reads.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
-	    print SHL "#PBS -l mem=30gb\n";
+	    print SHL "#PBS -l mem=40gb\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
@@ -93,10 +92,10 @@ foreach my $sub (@subs){
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	
 	my $unmap = "map";
-	if($run eq "run.0"){
+	if($run == 0){
 		$unmap = "both";
 	}
-	print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.sam $unmap $tgtfolder/$sub/retrieved.$sub.R1.fasta $tgtfolder/$sub/retrieved.$sub.R2.fasta $tgtfolder/$sub/unmap.$sub.R1.fasta $tgtfolder/$sub/unmap.$sub.R2.fasta\n";
+	print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.sam $unmap $tgtfolder/$sub/retrieved.$sub.R1.fasta $tgtfolder/$sub/unmap.$sub.R1.fasta $tgtfolder/$sub/retrieved.$sub.R2.fasta $tgtfolder/$sub/unmap.$sub.R2.fasta\n";
 	if(-e "$srcfolder/$sub/bowtie.out.$sub.long.sam" and -s "$srcfolder/$sub/bowtie.out.$sub.long.sam"){
 		print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.long.sam $unmap $tgtfolder/$sub/retrieved.$sub.long.fasta $tgtfolder/$sub/unmap.$sub.long.fasta\n";
 	}
