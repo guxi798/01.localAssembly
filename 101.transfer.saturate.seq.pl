@@ -12,6 +12,7 @@ my $reffile = shift @ARGV;				## reference file with gene ID and protein length 
 my $mode = shift @ARGV;					## abs: absolute value; pct: percent value
 my $cutoff = shift @ARGV;				## absolute AA number, or percent
 my $sleeptime = shift @ARGV;
+system("mkdir -p 00.script/shell.script/");
 my $errfile = "00.script/shell.script/transfer.saturate.seq.e";
 my $outfile = "00.script/shell.script/transfer.saturate.seq.o";
 my ($run) = $srcfolder =~ /\/(run\.[0-9]+)/;
@@ -52,7 +53,7 @@ foreach my $line (<LEN>){
 close LEN;
 
 my $frame = 0;
-open(BLS, "$blastfolder/blast.out") or die "ERROR: Cannot open $blastfolder/blast.out: $!";
+open(BLS, "$blastfolder/blastx.out") or die "ERROR: Cannot open $blastfolder/blastx.out: $!";
 my %full = ();
 foreach my $line (<BLS>){		## loop over blast record
 	chomp $line;

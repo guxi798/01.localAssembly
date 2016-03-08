@@ -67,6 +67,9 @@ opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 system("mv bowtie.* 00.script/$logfolder");
+system("chmod 777 -R 00.script/$logfolder");
+system("chmod 777 -R $srcfolder");
+
 system("rm -rf 00.script/04.retrieve.script/run.$run");
 system("mkdir -p 00.script/04.retrieve.script/run.$run");
 
@@ -113,3 +116,5 @@ foreach my $sub (@subs){
 
 close SRC;
 system("echo 'Finished 04.folder.retrievebowtie.reads.pl!' >> job.monitor.txt");
+
+system("chmod 777 -R 00.script/04.retrieve.script/run.$run");

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # run the script: 
 # module load perl/5.20.2
-# time perl 00.script/c7.get.blast.identity.pl 05.Full.Length/both.full.gene.txt 04.blastn/blast.xml.out ../03.Protein.Subset/07.map.back/02.blastn 05.Full.Length/both.full.identity.txt > 05.Full.Length/both.full.identity.out
+# time perl 00.script/c7.get.blast.identity.pl 08.GlobLocal.Comparison/both.full.gene.txt 05.Trinity/blastx.xml.out 07.map.back/03.bowtie.nucl 08.GlobLocal.Comparison/both.full.identity.txt > 08.GlobLocal.Comparison/both.full.identity.out
 
 use strict;
 use Bio::SearchIO;
@@ -11,9 +11,11 @@ my $fullfile = shift @ARGV;
 my $globlastfile = shift @ARGV;
 my $locblastfolder = shift @ARGV;
 my $tgtfile = shift @ARGV;
+my $mode = shift @ARGV;
 
 ## put fully recovered genes into hash table
 open(FUL, $fullfile);
+<FUL>;
 
 my %globfull = ();
 my %locfull = ();
@@ -22,20 +24,25 @@ my %genefull = ();
 foreach my $line(<FUL>){
 	chomp $line;
 	my @lines = split(/\t/, $line);
+	
+	## store unique gene ID into hash table
 	if(not exists $genefull{$lines[0]}){
 		$genefull{$lines[0]} = 0;
 	}else{
 		print "This gene appeared more than once: NEED CHECK $lines[0]!\n";
 	}
 	
-	my @glob = split(/,/, $lines[5]);
+	## store global contig ID
+	my @glob = split(/,/, $lines[1]);
 	foreach my $glob (@glob){
 		if(not exists $globfull{$glob}){
 			$globfull{$glob} = 0;
 		}
 	}
 	
-	my @loc = split(/,/, $lines[6]);
+	## store local contig ID, as diff runs/groups can share the same ID, need to 
+	## include both run and group info for unique contig ID
+	my @loc = split(/,/, $lines[2]);
 	foreach my $temp (@loc){
 		my @temp = split(/:/, $temp);
 		my $loc = shift @temp;
@@ -61,11 +68,13 @@ while(my $result = $globin->next_result){
 	$len =~ s/len=//;
 	if(not exists $globfull{$names[0]}){next;}
 	while(my $hit = $result->next_hit){
-		my @hitname = split(/\./, $hit->name);
+		#my @hitname = split(/\./, $hit->name);
 		#pop @hitname;
-		my $hitname = join(".", @hitname);
+		#my $hitname = join(".", @hitname);
+		my $hitname = $hit->name;
 		print "$names[0]\t$len\t$hitname\t";
 		my $identity = scalar($hit->seq_inds('query', 'identical'));
+		if($mode eq "prot"){$identity = $identity * 3;}
 		print $identity, "\t",$identity/$len,"\n";
 		if(not exists $globblast{$hitname}){
 			$globblast{$hitname}{'I'} = [$identity/$len];
@@ -95,6 +104,7 @@ foreach my $run (@runs){
 	my @groups = sort {$a <=> $b} grep(/[0-9]+/, readdir SUB);
 	
 	foreach my $group (@groups){
+		if(not exists $locfull{$run}{$group}){next;}	# save some computational time
 		print "run.$run\t$group\n";
 		my $locin = new Bio::SearchIO(-format => 'blastxml', 
 				-file => "$locblastfolder/run.$run/$group/$group.contigs.blast.xml.out");
@@ -108,6 +118,7 @@ foreach my $run (@runs){
 				my $hitname = $hit->name;
 				print "$names[0]\t$len\t$hitname\t";
 				my $identity = scalar($hit->seq_inds('query', 'identical'));
+				if($mode eq "prot"){$identity = $identity * 3;}
 				print $identity, "\t", $identity/$len,"\n";
 				if(not exists $locblast{$hitname}{$names[0]}){
 					$locblast{$hitname}{$names[0]}{'I'} = [$identity/$len];

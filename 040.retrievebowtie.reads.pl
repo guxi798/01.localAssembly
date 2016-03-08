@@ -24,13 +24,18 @@ my $line = 0;
 
 while (1){
 	my @records = ();
+	my @ids = ();
 	$run ++;
 	#print "$run\n";
 	
 	while($refline = <REF>){
-		#print "I'm in the first section\n";
 		if($refline =~ /^>/){
 			$count ++;
+			chomp $refline;
+			$refline =~ s/^>//;
+			$refline =~ s/\/1$//;
+			$refline =~ s/\/2$//;
+			push @ids, $refline;
 			if(!$seq){next;}
 			push @records, $seq;
 			$seq = 0;
@@ -43,25 +48,25 @@ while (1){
 			$seq = $refline;
 		}
 		
-		if($count > $blocksize){
-			$count = $count % $blocksize;
+		if($count >= $blocksize){
+			$count = 0;
 			last;
 		};
 	}
 	
 	if($refline){
 		push @records, $seq;
+		$seq = 0;
 	}
-		
+
 	while(1){
 		if($previous != 0){
 			if($previous > ($run - 1) * $blocksize and $previous <= $run * $blocksize){
-				print ">$sam","_","$previous\n";
+				#print ">$sam","_","$previous\n";
+				print ">$ids[$previous % $blocksize - 1]\n";
 				print "$records[$previous % $blocksize - 1]\n";
 				$previous = 0;
 			}else{
-				#my $x = ($run - 1) * $blocksize;
-				#print $x, "\t$previous\t", $run * $blocksize, "\n";
 				last;
 			}
 		}
@@ -77,7 +82,8 @@ while (1){
 			$previous = $lines[0];
 			last;
 		}else{
-			print ">$sam","_","$lines[0]\n";
+			#print ">$sam","_","$lines[0]\n";
+			print ">$ids[$pos - 1]\n";
 			print "$records[$pos - 1]\n";
 		}
 	}
@@ -85,6 +91,8 @@ while (1){
 	if(!$line){
 		last;
 	}
+
 }
 
-	
+close SRC;
+close REF;

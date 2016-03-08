@@ -64,3 +64,5 @@ foreach my $sub (@subs){
 
 close(SRC);
 system("echo 'Finished 02.makebowtiedb.folder.pl!' >> job.monitor.txt");
+system("chmod 777 -R 00.script/02.makebowtiedb.script/");
+system("chmod 777 -R 01.data/05.splitGenes");

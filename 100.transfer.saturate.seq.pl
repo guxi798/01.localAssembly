@@ -71,6 +71,11 @@ close CHK;
 ## start running the script
 system("mv blastx.back.* 00.script/07.blastx.script/run.$run/");
 system("mv blastn.back.* 00.script/07.blastn.script/run.$run/");
+system("chmod 777 -R 00.script/07.blastx.script/run.$run");
+system("chmod 777 -R 00.script/07.blastn.script/run.$run");
+system("chmod 777 -R $blastfolder");
+system("chmod 777 -R 07.map.back/02.blastn/run.$run");
+
 system("rm -rf 00.script/10.transfer.script/run.$run");
 system("mkdir -p 00.script/10.transfer.script/run.$run");
 system("mkdir -p $tgtfolder");
@@ -130,3 +135,4 @@ system("echo 'success' > 00.script/10.transfer.script/run.$run/transfer.saturate
 
 system("echo 'Finished 10.transfer.saturate.seq.pl!' >> job.monitor.txt");
 
+system("chmod 777 -R 00.script/10.transfer.script/run.$run");

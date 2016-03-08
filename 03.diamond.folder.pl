@@ -10,6 +10,7 @@ my $dbfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
 my $seqtype = shift @ARGV;
 my $logfolder = shift @ARGV;
+my $evalue = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my ($run) = $tgtfolder =~ /run\.([0-9]+)/;
 my $thread = 4;
@@ -57,24 +58,24 @@ foreach my $db (@dbs){
 		print SHL "mkdir -p $tgtfolder/$db\n";
 		
 		if($sub =~ /F$|Fu$|R$/){
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e 1e-10 -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub\n";
+			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub\n";
 			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.tab -f tab\n";
 			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.daa\n";
 		}else{
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e 1e-10 -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R1.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R1\n";
+			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R1.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R1\n";
 			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R1.tab -f tab\n";
 			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa\n";
 				
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e 1e-10 -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R2.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R2\n";
+			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R2.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R2\n";
 			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R2.tab -f tab\n";
 			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa\n";
 			
 			if(-s "$qryfolder/$sub/$sub.singles.fasta_simple.fasta"){
-				print SHL "time $command2/diamond blastx -p $thread -k 1 -e 1e-10 -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.singles.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.single\n";
+				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.singles.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.single\n";
 				print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.single.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.single.tab -f tab\n";
 				print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.single.daa\n";
 			}else{
-				system(":> $tgtfolder/$db/bowtie.out.$db.$sub.single.tab");
+				print SHL ":> $tgtfolder/$db/bowtie.out.$db.$sub.single.tab\n";
 			}
 		}
 		
@@ -94,3 +95,5 @@ foreach my $db (@dbs){
 close(QRY);
 close(DBF);
 system("echo 'Finished 03.diamond.folder.pl!' >> job.monitor.txt");
+
+system("chmod 777 -R 00.script/$logfolder");

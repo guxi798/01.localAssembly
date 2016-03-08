@@ -56,6 +56,7 @@ while(1){
 	}
 	sleep $sleeptime;
 }
+
 close CHK;
 close QRY;
 
@@ -68,6 +69,9 @@ my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 #}
 
 system("mv bowtie.* 00.script/$logfolder");
+system("chmod 777 -R 00.script/$logfolder");
+system("chmod 777 -R $srcfolder");
+
 system("rm -rf 00.script/04.retrieve.script/run.$run");
 system("mkdir -p 00.script/04.retrieve.script/run.$run");
 system("rm -rf $tgtfolder");
@@ -97,21 +101,21 @@ foreach my $sub (@subs){
 	if($sub ne "99999"){
 		foreach my $sam (@tempsams){
 			if($sam =~ /F$|Fu$|R$/) { ## 454 data
-				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.tab 01.data/02.Fasta/$sam/$sam.simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
+				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.tab 01.data/02.Fasta/$sam/$sam.fna $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
 			}else{
-				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.R1.tab 01.data/02.Fasta/$sam/$sam.R1.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
-				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.R2.tab 01.data/02.Fasta/$sam/$sam.R2.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
-				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.single.tab 01.data/02.Fasta/$sam/$sam.singles.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
+				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.R1.tab 01.data/02.Fasta/$sam/$sam.R1.fasta_pairs_R1.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
+				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.R2.tab 01.data/02.Fasta/$sam/$sam.R2.fasta_pairs_R2.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
+				print SHL "time perl 00.script/040.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.$sam.single.tab 01.data/02.Fasta/$sam/$sam.R1.fasta_singles.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
 			}
 		}
 	}else{
 		foreach my $sam (@tempsams){
 			if($sam =~ /F$|Fu$|R$/){
-				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam F 01.data/02.Fasta/$sam/$sam.simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
+				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam F 01.data/02.Fasta/$sam/$sam.fna $blocksize >> $tgtfolder/$sub/retrieved.$sub.long.fasta\n";
 			}else{
-				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam R1 01.data/02.Fasta/$sam/$sam.R1.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
-				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam R2 01.data/02.Fasta/$sam/$sam.R2.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
-				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam S 01.data/02.Fasta/$sam/$sam.singles.fasta_simple.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
+				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam R1 01.data/02.Fasta/$sam/$sam.R1.fasta_pairs_R1.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
+				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam R2 01.data/02.Fasta/$sam/$sam.R2.fasta_pairs_R2.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
+				print SHL "time perl 00.script/040.retrieveunmap.reads.pl $srcfolder $sam S 01.data/02.Fasta/$sam/$sam.R1.fasta_singles.fasta $blocksize >> $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
 			}
 		}
 	}
@@ -131,3 +135,5 @@ foreach my $sub (@subs){
 
 close SRC;
 system("echo 'Finished 040.folder.retrievebowtie.reads.pl!' >> job.monitor.txt");
+
+system("chmod 777 -R 00.script/04.retrieve.script/run.$run");

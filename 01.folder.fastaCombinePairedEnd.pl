@@ -63,3 +63,7 @@ foreach my $sub (@subs){
 close SRC;
 
 system("echo 'Finished 01.folder.fastaCombinePairedEnd.pl!' >> job.monitor.txt");
+system("chmod 777 -R 01.data/01.Fastq");
+system("chmod 777 -R 01.data/02.Fasta");
+system("chmod 777 -R 00.script");
+

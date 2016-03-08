@@ -22,7 +22,6 @@ while(1){
 	my $count = 0;
 	my @temp = @chks;
 	my $i = 0;
-	#print "I'm here\n";
 	while(my $chk = shift @temp){
 		my @stderr = glob("assembly.trinity.$chk.o*");
 		my @stdout = glob("assembly.trinity.$chk.e*");
@@ -41,7 +40,7 @@ while(1){
 			while(my $chk = shift @temp){
 				if(!(-e "$srcfolder/$chk/Trinity.fasta")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
-					#system("rm -f assembly.trinity.$chk.*");
+					system("rm -f assembly.trinity.$chk.*");
 					#system("rm -r $srcfolder/$chk");
 					system("echo 'Resubmitting the job: assembly.trinity.$chk.sh' >> job.monitor.txt");
 					system("qsub 00.script/06.trinity.script/run.$run/assembly.trinity.$chk.sh");
@@ -68,6 +67,9 @@ opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 system("mv assembly.trinity.* 00.script/06.trinity.script/run.$run/");
+system("chmod 777 -R 00.script/06.trinity.script/run.$run");
+system("chmod 777 -R $srcfolder");
+
 system("rm -rf 00.script/06.truncate.script/run.$run");
 system("mkdir -p 00.script/06.truncate.script/run.$run");
 
@@ -110,3 +112,4 @@ foreach my $sub (@subs){
 close SRC;
 system("echo 'Finished 06.truncate.header.folder.pl!' >> job.monitor.txt");
 
+system("chmod 777 -R 00.script/06.truncate.script/run.$run");

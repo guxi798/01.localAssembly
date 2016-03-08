@@ -64,3 +64,4 @@ foreach my $sub (@subs){
 
 close SRC;
 system("echo 'Finished 07.blastx.back.pl!' >> job.monitor.txt");
+system("chmod 777 -R 00.script/07.blastn.script/run.$run");

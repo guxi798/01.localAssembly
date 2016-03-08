@@ -31,6 +31,7 @@ my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 system("rm -rf 00.script/02.makebowtiedb.script/run.$run");
 system("mkdir -p 00.script/02.makebowtiedb.script/run.$run");
+system("chmod 777 -R $tgtfolder");
 
 foreach my $sub (@subs){
 	my $shell = "00.script/02.makebowtiedb.script/run.$run/makebowtiedb.$sub.sh";

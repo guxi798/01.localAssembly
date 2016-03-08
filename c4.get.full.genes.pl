@@ -1,23 +1,26 @@
 #!/usr/bin/perl -w
 # run the script:
-# time perl 00.script/c4.get.full.genes.pl ../03.Protein.Subset/01.data/05.splitGenes/03.Full.Length 01.data/04.GeneOfInterest/GeneID.v2.txt 05.Full.Length/full.length.contigs.fasta 05.Full.Length/both.full.gene.txt 05.Full.Length/local.uniq.gene.txt 05.Full.Length/global.uniq.gene.txt
+# time perl 00.script/c4.get.full.genes.pl 01.data/04.GeneOfInterest/GeneID.v2.txt 01.data/05.splitGenes/03.Full.Length 05.Trinity/full.length.contigs.fasta 08.GlobLocal.Comparison
 
 use strict;
 
-my $srcfolder = shift @ARGV;
-my $reffile = shift @ARGV;
-my $globfile = shift @ARGV;
-my $tgtfile = shift @ARGV;
-my $locout = shift @ARGV;
-my $globout = shift @ARGV;
+my $reffile = shift @ARGV;			# gene information file with gene length, expression, etc. 
+my $locfolder = shift @ARGV;		# local assembly folder containing sub-group fully assembled contigs
+my $globfile = shift @ARGV;			# trinity assembly file containing assembled contigs
+my $outfolder = shift @ARGV;		# output folder for comparison
+my $bothout = "$outfolder/both.full.gene.txt";			# output file with common genes
+my $locout = "$outfolder/local.uniq.gene.txt";			# output file for unique local genes
+my $globout = "$outfolder/global.uniq.gene.txt";			# output file for unique global genes
 
-opendir(SRC, $srcfolder);
+# build output dir
+system("mkdir -p $outfolder");
 
-my @runs = sort grep(/run\.([0-9]+)/, readdir SRC);
-map{$_ =~ s/run\.//} @runs;
-@runs = sort {$a <=> $b} @runs;
-
-closedir SRC;
+# get run information
+opendir(SRC, $locfolder);
+	my @runs = sort grep(/run\.([0-9]+)/, readdir SRC);
+	map{$_ =~ s/run\.//} @runs;
+	@runs = sort {$a <=> $b} @runs;
+	closedir SRC;
 
 ## get protein length and group from reference file
 ## protein length used for identity calculation
@@ -34,38 +37,35 @@ foreach my $line (<REF>){
 close REF;
 
 ## store full length record
+# store local fully assembled contigs
 my %hash = ();  
-foreach my $run (@runs){
-	open(SRC, "$srcfolder/run.$run/full.length.contigs.fasta");
-	foreach my $line (<SRC>){
-		chomp $line;
-		if(!($line =~ /^>/)){next;}
-		$line =~ s/^>//;
-		my @lines = split(/\s+/, $line);
+open(SRC, "$locfolder/count1");
+foreach my $line (<SRC>){
+	chomp $line;
+	my @lines = split(/\s+/, $line);
+	
+	my @index = (0, 2..$#lines);	## get other info except gene ID
+	my @info = @lines[@index];
+	my $run = pop @info;
+	
+	if(not exists $hash{$lines[1]}){  ## first time to see full length gene
+		$hash{$lines[1]} = [$run, \@info];
+	}else{							## not the first time
+		my @temp = @{$hash{$lines[1]}};
+		my $oldrun = $temp[0];
 		
-		my @index = (0, 2..$#lines);	## get other info except gene ID
-		my @info = @lines[@index];
-		push @info, $run;		## store run info
-		
-		if(not exists $hash{$lines[1]}){  ## first time to see full length gene
-			$hash{$lines[1]} = [\@info];
-		}else{							## not the first ime
-			my @record = @{$hash{$lines[1]}};
-			my @oldinfo = @{$record[0]};
-			my $oldrun = pop @oldinfo;
-			
-			if($oldrun == $run){		## within the same run, contigs correspond to isoform
-				push @{$hash{$lines[1]}}, \@info;
-			}elsif($oldrun < $run){		## further runs recover the same gene, replace old info
-				$hash{$lines[1]} = [\@info];
-			}else{
-				die "Something unexpected happened.\n";
-			}
+		if($oldrun == $run){		## within the same run, contigs correspond to isoform
+			push @{$hash{$lines[1]}}, \@info;
+		}elsif($run > $oldrun){		## further runs recover the same gene, replace old info
+			$hash{$lines[1]} = [$run, \@info];
+		}else{
+			die "Something unexpected happened.\n";
 		}
 	}
-	close SRC;
 }
+close SRC;
 
+# store global fully assembled contigs
 open(GBL, $globfile);
 my %hash2 = ();
 foreach my $line (<GBL>){
@@ -86,9 +86,15 @@ foreach my $line (<GBL>){
 }
 close GBL;
 
-open(TGT, ">$tgtfile");
+## write to output file
+open(TGT, ">$bothout");
 open(LOT, ">$locout");
 open(GOT, ">$globout");
+
+print TGT "Gene\tGlobal\tLocal\tPro_len\tTrans_Len\tGC\tExpr\n";
+print LOT "Gene\tLocal\tPro_len\tTrans_Len\tGC\tExpr\n";
+print GOT "Gene\tGlobal\tPro_len\tTrans_Len\tGC\tExpr\n";
+
 foreach my $key (sort keys %hash2){
 	my @global = @{$hash2{$key}};
 	my @globinfo = ();
@@ -112,21 +118,22 @@ foreach my $key (sort keys %hash2){
 	}else{
 		die "Error: not found $key in reference file $reffile\n";
 	}
+	$gc = sprintf('%.2f', $gc);
 
 	if(not exists $hash{$key}){
-		print GOT "$key\t$len\t$tranlen\t$gc\t$expr\t", join(",", @globinfo), "\n";
+		print GOT "$key\t", join(",", @globinfo), "\t$len\t$tranlen\t$gc\t$expr\t", "\n";
 		next;
 	}
 	
 	my @local = @{$hash{$key}};
+	my $run = shift @local;
 	my @locinfo = ();
 	foreach my $r (@local){
 		my @info = @$r;
-		my $run = pop @info;
 		push @locinfo, $info[0].":".$group.":".$run;
 	}
 	
-	print TGT "$key\t$len\t$tranlen\t$gc\t$expr\t", join(",", @globinfo), "\t", join(",", @locinfo), "\n";
+	print TGT "$key\t", join(",", @globinfo), "\t", join(",", @locinfo), "\t$len\t$tranlen\t$gc\t$expr\t", "\n";
 }
 
 foreach my $key (sort keys %hash){
@@ -148,14 +155,15 @@ foreach my $key (sort keys %hash){
 	}
 	
 	my @local = @{$hash{$key}};
+	my $run = shift @local;
 	my @locinfo = ();
 	foreach my $r (@local){
 		my @info = @$r;
-		my $run = pop @info;
 		push @locinfo, $info[0].":".$group.":".$run;
 	}
+	$gc = sprintf('%.2f', $gc);
 	
-	print LOT "$key\t$len\t$tranlen\t$gc\t$expr\t", join(",", @locinfo), "\n";
+	print LOT "$key\t", join(",", @locinfo), "\t$len\t$tranlen\t$gc\t$expr\t", "\n";
 }
 
 close TGT;

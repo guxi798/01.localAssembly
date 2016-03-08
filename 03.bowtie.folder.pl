@@ -71,6 +71,9 @@ opendir(DBF, $dbfolder) or die "ERROR: Cannot open $dbfolder: $!";
 my @dbs = sort(grep(/^[0-9]+/, readdir(DBF)));
 
 system("mv makebowtiedb.* 00.script/02.makebowtiedb.script/run.$run");
+system("chmod 777 -R 00.script/02.makebowtiedb.script/run.$run");
+system("chmod 777 -R $dbfolder");
+
 system("rm -rf 00.script/$logfolder");
 system("mkdir -p 00.script/$logfolder");
 
@@ -150,3 +153,5 @@ foreach my $db (@dbs){
 close(QRY);
 close(DBF);
 system("echo 'Finished 03.bowtie.folder.pl!' >> job.monitor.txt");
+
+system("chmod 777 -R 00.script/$logfolder");

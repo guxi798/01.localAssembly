@@ -91,6 +91,9 @@ opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
 my @subs = sort(grep(/^[0-9]+/, readdir(SRC)));
 
 system("mv retrievebowtie.reads.* 00.script/04.retrieve.script/run.$run/");
+system("chmod 777 -R 00.script/04.retrieve.script/run.$run");
+system("chmod 777 -R $srcfolder");
+
 system("rm -rf 00.script/06.trinity.script/run.$run");
 system("mkdir -p 00.script/06.trinity.script/run.$run");
 
@@ -103,7 +106,7 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -q batch\n";
 	    print SHL "#PBS -N assembly.trinity.$sub\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
-	    print SHL "#PBS -l walltime=48:00:00\n";
+	    print SHL "#PBS -l walltime=120:00:00\n";
 	    print SHL "#PBS -l mem=",$memory,"gb\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
@@ -147,3 +150,4 @@ foreach my $sub (@subs){
 close SRC;
 system("echo 'Finished 06.assembly.trinity.folder.pl!' >> job.monitor.txt");
 
+system("chmod 777 -R 00.script/06.trinity.script/run.$run");

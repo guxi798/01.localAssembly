@@ -119,8 +119,8 @@ while (my $line = <SRC>){
 close SRC;
 close TGT1;
 if($tgtfile2){close TGT2;}
-if($unmapfile1){close UNM1;}
-if($unmapfile2){close UNM2;}
+if($mode eq "both"){close UNM1;}
+if($unmapfile2 and $mode eq "both"){close UNM2;}
 
 
 	

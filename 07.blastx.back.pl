@@ -68,6 +68,9 @@ close CHK;
 
 ## start running the script
 system("mv truncate.header.* 00.script/06.truncate.script/run.$run/");
+system("chmod 777 -R 00.script/06.truncate.script/run.$run");
+system("chmod 777 -R $srcfolder");
+
 system("rm -rf 00.script/07.blastx.script/run.$run");
 system("mkdir -p 00.script/07.blastx.script/run.$run");
 
@@ -118,3 +121,5 @@ foreach my $sub (@subs){
 
 close SRC;
 system("echo 'Finished 07.blastx.back.pl!' >> job.monitor.txt");
+
+system("chmod 777 -R 00.script/07.blastx.script/run.$run");
