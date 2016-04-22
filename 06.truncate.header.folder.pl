@@ -87,13 +87,13 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
     }elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-	print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 
 	print SHL "time perl 00.script/06.truncate.header.pl $srcfolder/$sub/Trinity.fasta $srcfolder/$sub/Trinity.new.fasta\n\n";
 	

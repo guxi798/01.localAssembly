@@ -87,14 +87,14 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
 	    print SHL "#PBS -l mem=30gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	
 	my @tempsams = @sams;
@@ -119,8 +119,8 @@ foreach my $sub (@subs){
 			}
 		}
 	}
-	print SHL "sed -i 's/\\(>[A-Za-z0-9_]*\\)/\\1\\/1/' $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
-	print SHL "sed -i 's/\\(>[A-Za-z0-9_]*\\)/\\1\\/2/' $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
+	print SHL "sed -i '/^>[A-Za-z0-9_]*/s/\$/\\/1/' $tgtfolder/$sub/retrieved.$sub.R1.fasta\n";
+	print SHL "sed -i '/^>[A-Za-z0-9_]*/s/\$/\\/2/' $tgtfolder/$sub/retrieved.$sub.R2.fasta\n";
 	
 	close SHL;
 	system("chmod u+x $shell");

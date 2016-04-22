@@ -84,14 +84,14 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
 	    print SHL "#PBS -l mem=40gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	
 	my $unmap = "map";

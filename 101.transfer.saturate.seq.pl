@@ -1,27 +1,27 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/10.transfer.saturate.seq.pl 06.assembly/03.bowtie.nucl/run.0 07.map.back/03.bowtie.nucl/run.0 01.data/05.splitGenes/02.Transcript/run.1 01.data/04.GeneOfInterest/GeneID.v1.txt pct 0.02 10 
+# run the script: time perl 00.script/101.transfer.saturate.seq.pl 10.unmapped.reads.trinity/Trinity.new.fasta 10.unmapped.reads.trinity/blastx.out 10.unmapped.reads.trinity 01.data/04.GeneOfInterest/GeneID.v1.txt pct 0.02 
 
 use strict;
 use Bio::SeqIO;
 
 ## read in parameters required by the script
-my $srcfolder = shift @ARGV;			## assembled contig folder
-my $blastfolder = shift @ARGV;			## blast result folder
+my $srcfile = shift @ARGV;				## assembled contig file
+my $blastfile = shift @ARGV;			## blast result folder
 my $tgtfolder = shift @ARGV;			## target folder to put contigs for new run
 my $reffile = shift @ARGV;				## reference file with gene ID and protein length info
 my $mode = shift @ARGV;					## abs: absolute value; pct: percent value
 my $cutoff = shift @ARGV;				## absolute AA number, or percent
-my $sleeptime = shift @ARGV;
 system("mkdir -p 00.script/shell.script/");
 my $errfile = "00.script/shell.script/transfer.saturate.seq.e";
 my $outfile = "00.script/shell.script/transfer.saturate.seq.o";
-my ($run) = $srcfolder =~ /\/(run\.[0-9]+)/;
 
 ## record file: error and output file
 open(ERR, ">$errfile") or die "ERROR: Cannot write $errfile: $!";
 open(OUT, ">$outfile") or die "ERROR: Cannot write $outfile: $!";
-
+system("mkdir -p $tgtfolder");
 open(TGT1, ">$tgtfolder/full.length.contigs.fasta") or die "ERROR: Cannot write $tgtfolder/full.length.contigs.fasta: $!";
+open(TGT2, ">$tgtfolder/incomplete.contigs.fasta") or die "ERROR: Cannot write $tgtfolder/incomplete.fasta: $!";
+open(TGT3, ">$tgtfolder/unmapped.contigs.fasta");
 
 ## read ref file and put gene ID and protein length into hash
 open(REF, $reffile) or die "ERROR: Cannot open $reffile: $!";
@@ -38,7 +38,7 @@ foreach my $line (<REF>){
 }
 
 ## need contig length for inferring frame position
-open(LEN, "$srcfolder/Trinity.new.fasta");
+open(LEN, "$srcfile");
 my %len = ();
 foreach my $line (<LEN>){
 	if(!($line =~ /^>/)){next;}
@@ -53,14 +53,14 @@ foreach my $line (<LEN>){
 close LEN;
 
 my $frame = 0;
-open(BLS, "$blastfolder/blastx.out") or die "ERROR: Cannot open $blastfolder/blastx.out: $!";
+open(BLS, "$blastfile") or die "ERROR: Cannot open $blastfile: $!";
 my %full = ();
 foreach my $line (<BLS>){		## loop over blast record
 	chomp $line;
 	my @lines = split(/\t/, $line);
 	my ($contig_info, $gene) = @lines[0..1];
 	my @genes = split(/\./, $gene);
-	pop @genes;
+	#pop @genes;
 	$gene = join(".", @genes);
 	my @contig_info = split(/\|/, $contig_info);
 	my $contig = $contig_info[0];
@@ -135,25 +135,20 @@ foreach my $key (sort(keys %full)){
 	}
 }
 
-#open(TRI, "$srcfolder/$sub/Trinity.new.fasta") or die "ERROR: Cannot open $srcfolder/$sub/Trinity.new.fasta: $!";
-system("mkdir -p $tgtfolder");
-open(TGT2, ">$tgtfolder/incomplete.fasta") or die "ERROR: Cannot write $tgtfolder/incomplete.fasta: $!";
-my $seqfile = "$srcfolder/Trinity.new.fasta";
-
-my $seqio_obj = Bio::SeqIO->new(-file => $seqfile, -format => "fasta");
+my $seqio_obj = Bio::SeqIO->new(-file => $srcfile, -format => "fasta");
 
 while(my $seq_obj = $seqio_obj->next_seq){
 	my $line = $seq_obj->id;
-	#print "$line\n";
-	my @lines = split(/\s+/, $line);
-	if(exists $contigs{$lines[0]}){
-		print TGT1 ">$lines[0] ", join(" ", @{$contigs{$lines[0]}}), "\n";
+	my @temp = split(/\s+/, $seq_obj->desc);
+	my $seqlen = $temp[0];
+	if(exists $contigs{$line}){
+		print TGT1 ">$line $seqlen ", join(" ", @{$contigs{$line}}), "\n";
 		print TGT1 $seq_obj->seq, "\n";
-	}elsif(exists $incomplete{$lines[0]}){
-		my $gene = ${$incomplete{$lines[0]}}[0];
-		my $qlen = ${$incomplete{$lines[0]}}[2];
-		my $mark = ${$incomplete{$lines[0]}}[3];
-		my $frame = ${$incomplete{$lines[0]}}[4];
+	}elsif(exists $incomplete{$line}){
+		my $gene = ${$incomplete{$line}}[0];
+		my $qlen = ${$incomplete{$line}}[2];
+		my $mark = ${$incomplete{$line}}[3];
+		my $frame = ${$incomplete{$line}}[4];
 		my ($proseq, $plen) = &Find_ORF($seq_obj, $frame);
 		if($mode eq "abs"){
 			if($plen > ($qlen-$cutoff)){
@@ -162,10 +157,10 @@ while(my $seq_obj = $seqio_obj->next_seq){
 				#foreach my $alt_contig (@alt_contigs){
 				#	${$incomplete{$alt_contig}}[3] = 1; ## mark all alt contigs to be fully assembled
 				#}
-				print TGT1 ">$lines[0] $gene $plen $qlen $mark $frame \n";
+				print TGT1 ">$line $seqlen $gene $plen $qlen $mark $frame \n";
 				print TGT1 $seq_obj->seq, "\n";
 			}else{
-				print TGT2 ">$lines[0] $gene $plen $qlen $mark $frame \n";
+				print TGT2 ">$line $seqlen $gene $plen $qlen $mark $frame \n";
 				print TGT2 $seq_obj->seq, "\n";
 			}
 		}elsif($mode eq "pct"){
@@ -176,10 +171,10 @@ while(my $seq_obj = $seqio_obj->next_seq){
 				#foreach my $alt_contig (@alt_contigs){
 				#	${$incomplete{$alt_contig}}[3] = 1; ## mark all alt contigs to be fully assembled
 				#}
-				print TGT1 ">$lines[0] $gene $plen $qlen $mark $frame \n";
+				print TGT1 ">$line $seqlen $gene $plen $qlen $mark $frame \n";
 				print TGT1 $seq_obj->seq, "\n";
 			}else{
-				print TGT2 ">$lines[0] $gene $plen $qlen $mark $frame \n";
+				print TGT2 ">$line $seqlen $gene $plen $qlen $mark $frame \n";
 				print TGT2 $seq_obj->seq, "\n";
 			}
 		}else{
@@ -187,7 +182,8 @@ while(my $seq_obj = $seqio_obj->next_seq){
 			die;
 		} ## mode if else
 	}else{	## the contig doesn't map any gene
-		next;
+		print TGT3 ">$line $seqlen\n";
+		print TGT3 $seq_obj->seq, "\n";
 	}## if exists contig has gene mapped
 	
 } ## while reading next seq record				
@@ -201,8 +197,6 @@ close OUT;
 
 system("grep -E 'ERROR|Error|error' 00.script/shell.script/transfer.saturate.seq.e > 00.script/shell.script/summary.error.log");
 system("echo 'success' > 00.script/shell.script/transfer.saturate.seq.log");
-
-system("echo 'Finished 10.transfer.saturate.seq.pl!' >> job.monitor.txt");
 
 ########################
 sub Find_ORF{

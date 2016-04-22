@@ -23,20 +23,20 @@ foreach my $sub (@subs){
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
 	if($platform eq "sapelo"){
-    print SHL "#PBS -S /bin/bash\n";
-    print SHL "#PBS -q batch\n";
-    print SHL "#PBS -N IDCoverter.$sub\n";
-    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
-    print SHL "#PBS -l walltime=1:00:00\n";
-    print SHL "#PBS -l pvmem=20gb\n";
+		print SHL "#PBS -S /bin/bash\n";
+		print SHL "#PBS -q batch\n";
+		print SHL "#PBS -N IDCoverter.$sub\n";
+		print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
+		print SHL "#PBS -l walltime=1:00:00\n";
+		print SHL "#PBS -l pvmem=20gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
    
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 	if($sub =~ /F$|Fu$|R$/){
     	print SHL "time cat $srcfolder/$sub/$sub.fna | awk '{if(\$_ ~ /^>/){count++; print \">\"count} else{print \$_}}' > $srcfolder/$sub/$sub.simple.fasta\n";
     }else{

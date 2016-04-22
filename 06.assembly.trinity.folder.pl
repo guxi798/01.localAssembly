@@ -108,15 +108,16 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=120:00:00\n";
 	    print SHL "#PBS -l mem=",$memory,"gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
     my $command1 = 0;
+	my $t = $thread / 2;
 	if($platform eq "sapelo"){
 		$command1 = "/usr/local/apps/trinity/r20140717";
 	    print SHL "module load trinity/r20140717\n\n";
@@ -124,8 +125,7 @@ foreach my $sub (@subs){
 		$command1 = "/usr/local/trinity/r20140717";
 		print SHL "export LD_LIBRARY_PATH=/usr/local/gcc/4.7.1/lib:/usr/local/gcc/4.7.1/lib64:\${LD_LIBRARY_PATH}\n";
 		print SHL "export PATH=/usr/local/gmap-gsnap/latest/bin/:\${PATH}\n\n";
-		$thread /= 2;
-		$memory = 25;
+		$memory = "25";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
@@ -141,7 +141,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
     	system("qsub $shell");
 	}elsif($platform eq "zcluster"){
-		system("qsub -q rcc-30d -pe thread $thread $shell");
+		system("qsub -q rcc-30d -pe thread $t -l mem_total=$memory"."g $shell");
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}

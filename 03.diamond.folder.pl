@@ -37,47 +37,53 @@ foreach my $db (@dbs){
 			print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 			print SHL "#PBS -l walltime=48:00:00\n";
 			print SHL "#PBS -l mem=30gb\n";
+			print SHL "\n";
+			print SHL "cd \$PBS_O_WORKDIR\n";
 		}elsif($platform eq "zcluster"){
 			print SHL "#!/bin/bash\n";
 		}else{
 			die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 		}
-		print SHL "\n";
-		print SHL "cd \$PBS_O_WORKDIR\n";
 	    my $command2 = 0;
+		my $t = $thread / 2;
 		if($platform eq "sapelo"){
 			$command2 = "/usr/local/apps/diamond/0.7.9/bin";
 	    	print SHL "module load anaconda/2.2.0  boost/gcc447/1.57.0 zlib/gcc447/1.2.8\n";
+			if($sub =~ /F$|Fu$|R$/){
+				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub\n";
+				print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.tab -f tab\n";
+				print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.daa\n";
+			}else{
+				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R1.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R1\n";
+				print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R1.tab -f tab\n";
+				print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa\n";
+					
+				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R2.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R2\n";
+				print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R2.tab -f tab\n";
+				print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa\n";
+				
+				if(-s "$qryfolder/$sub/$sub.singles.fasta_simple.fasta"){
+					print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.singles.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.single\n";
+					print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.single.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.single.tab -f tab\n";
+					print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.single.daa\n";
+				}else{
+					print SHL ":> $tgtfolder/$db/bowtie.out.$db.$sub.single.tab\n";
+				}
+			}
 	    }elsif($platform eq "zcluster"){
 			$command2 = "/usr/local/diamond/0.6.12/bin";
-			$thread /= 2;
+			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R1.fasta_simple.fasta -o $tgtfolder/$db/bowtie.out.$db.$sub.R1.tab\n";
+			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R2.fasta_simple.fasta -o $tgtfolder/$db/bowtie.out.$db.$sub.R2.tab\n";
+			if(-s "$qryfolder/$sub/$sub.singles.fasta_simple.fasta"){
+				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.singles.fasta_simple.fasta -o $tgtfolder/$db/bowtie.out.$db.$sub.single.tab\n";
+			}else{
+				print SHL ":> $tgtfolder/$db/bowtie.out.$db.$sub.single.tab\n";
+			}
 		}else{
 			die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 		}
 
 		print SHL "mkdir -p $tgtfolder/$db\n";
-		
-		if($sub =~ /F$|Fu$|R$/){
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub\n";
-			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.tab -f tab\n";
-			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.daa\n";
-		}else{
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R1.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R1\n";
-			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R1.tab -f tab\n";
-			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R1.daa\n";
-				
-			print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.R2.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.R2\n";
-			print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.R2.tab -f tab\n";
-			print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.R2.daa\n";
-			
-			if(-s "$qryfolder/$sub/$sub.singles.fasta_simple.fasta"){
-				print SHL "time $command2/diamond blastx -p $thread -k 1 -e $evalue -d $dbfolder/$db/$db -q $qryfolder/$sub/$sub.singles.fasta_simple.fasta -a $tgtfolder/$db/bowtie.out.$db.$sub.single\n";
-				print SHL "$command2/diamond view -a $tgtfolder/$db/bowtie.out.$db.$sub.single.daa -o $tgtfolder/$db/bowtie.out.$db.$sub.single.tab -f tab\n";
-				print SHL "rm -f $tgtfolder/$db/bowtie.out.$db.$sub.single.daa\n";
-			}else{
-				print SHL ":> $tgtfolder/$db/bowtie.out.$db.$sub.single.tab\n";
-			}
-		}
 		
 		print SHL "\n";
 		close(SHL);
@@ -85,7 +91,7 @@ foreach my $db (@dbs){
 		if($platform eq "sapelo"){
 	    	system("qsub $shell");
 		}elsif($platform eq "zcluster"){
-			system("qsub -q rcc-30d -pe thread $thread $shell");
+			system("qsub -q rcc-30d -pe thread $t $shell");
 		}else{
 			die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 		}

@@ -32,14 +32,14 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=6:00:00\n";
 	    print SHL "#PBS -l mem=20gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 	if($platform eq "sapelo"){
 		print SHL "module load anaconda/2.2.0\n";
 	}elsif($platform eq "zcluster"){
@@ -47,7 +47,7 @@ foreach my $sub (@subs){
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-	print SHL "time python 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fastq $srcfolder/$sub/$sub.R2.fastq /\n";
+	print SHL "time python2.7 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fastq $srcfolder/$sub/$sub.R2.fastq /\n";
 	
 	close SHL;
 	

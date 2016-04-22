@@ -35,7 +35,8 @@ while (1){
 			$refline =~ s/^>//;
 			$refline =~ s/\/1$//;
 			$refline =~ s/\/2$//;
-			push @ids, $refline;
+			my @reflines = split(/\s+/, $refline);
+			push @ids, $reflines[0];
 			if(!$seq){next;}
 			push @records, $seq;
 			$seq = 0;

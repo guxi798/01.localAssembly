@@ -208,15 +208,16 @@ foreach my $sub (@subs){	## loop over parallized groups
 	while(my $seq_obj = $seqio_obj->next_seq){
 		my $line = $seq_obj->id;
 		#print "$line\n";
-		my @lines = split(/\|/, $line);
-		if(exists $contigs{$lines[0]}){
-			print TGT1 ">$lines[0] ", join(" ", @{$contigs{$lines[0]}}), " $newrun\n";
+		my @temp = split(/\s+/, $seq_obj->desc);
+		my $seqlen = $temp[0];
+		if(exists $contigs{$line}){
+			print TGT1 ">$line $seqlen ", join(" ", @{$contigs{$line}}), " $newrun\n";
 			print TGT1 $seq_obj->seq, "\n";
-		}elsif(exists $incomplete{$lines[0]}){
-			my $gene = ${$incomplete{$lines[0]}}[0];
-			my $qlen = ${$incomplete{$lines[0]}}[2];
-			my $mark = ${$incomplete{$lines[0]}}[3];
-			my $frame = ${$incomplete{$lines[0]}}[4];
+		}elsif(exists $incomplete{$line}){
+			my $gene = ${$incomplete{$line}}[0];
+			my $qlen = ${$incomplete{$line}}[2];
+			my $mark = ${$incomplete{$line}}[3];
+			my $frame = ${$incomplete{$line}}[4];
 			my ($proseq, $plen) = &Find_ORF($seq_obj, $frame);
 			if($mode eq "abs"){
 				if($plen > ($qlen-$cutoff)){
@@ -225,10 +226,10 @@ foreach my $sub (@subs){	## loop over parallized groups
 					#foreach my $alt_contig (@alt_contigs){
 					#	${$incomplete{$alt_contig}}[3] = 1; ## mark all alt contigs to be fully assembled
 					#}
-					print TGT1 ">$lines[0] $gene $plen $qlen $mark $frame $newrun\n";
+					print TGT1 ">$line $seqlen $gene $plen $qlen $mark $frame $newrun\n";
 					print TGT1 $seq_obj->seq, "\n";
 				}else{
-					print TGT2 ">$lines[0] $gene $plen $qlen $mark $frame $newrun\n";
+					print TGT2 ">$line $seqlen $gene $plen $qlen $mark $frame $newrun\n";
 					print TGT2 $seq_obj->seq, "\n";
 				}
 			}elsif($mode eq "pct"){
@@ -239,10 +240,10 @@ foreach my $sub (@subs){	## loop over parallized groups
 					#foreach my $alt_contig (@alt_contigs){
 					#	${$incomplete{$alt_contig}}[3] = 1; ## mark all alt contigs to be fully assembled
 					#}
-					print TGT1 ">$lines[0] $gene $plen $qlen $mark $frame $newrun\n";
+					print TGT1 ">$line $seqlen $gene $plen $qlen $mark $frame $newrun\n";
 					print TGT1 $seq_obj->seq, "\n";
 				}else{
-					print TGT2 ">$lines[0] $gene $plen $qlen $mark $frame $newrun\n";
+					print TGT2 ">$line $seqlen $gene $plen $qlen $mark $frame $newrun\n";
 					print TGT2 $seq_obj->seq, "\n";
 				}
 			}else{

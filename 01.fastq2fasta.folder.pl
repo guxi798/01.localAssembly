@@ -29,14 +29,13 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=4:00:00\n";
 	    print SHL "#PBS -l mem=20gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-    
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	if($sub =~ /F$|Fu$|R$/){
@@ -56,7 +55,7 @@ foreach my $sub (@subs){
 	system("chmod u+x $shell");
 	if($platform eq "sapelo"){
     	system("qsub $shell");
-	}elsif($platform eq "scluster"){
+	}elsif($platform eq "zcluster"){
 		system("qsub -q rcc-30d -pe thread $thread $shell");
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";

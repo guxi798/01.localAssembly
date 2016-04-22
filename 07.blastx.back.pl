@@ -88,13 +88,13 @@ foreach my $sub (@subs){
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";
-    }elsif($platform eq "zcluster"){
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
+   }elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-    print SHL "\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
 
 	my $command1 = 0;
 	if($platform eq "sapelo"){

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/13.estimate.abundance.pl 01.data/01.Fastq 13.abundance/run.3 01.data/05.splitGenes/02.Transcript/run.3/contigs.good.fasta
+# run the script: time perl 00.script/13.estimate.abundance.pl 01.data/01.Fastq 13.abundance/run.3 01.data/05.splitGenes/02.Transcript/run.3/contigs.good.fasta single-end
 
 use strict;
 
@@ -7,38 +7,70 @@ use strict;
 my $srcfolder = shift @ARGV;			## reads file
 my $tgtfolder = shift @ARGV;			## target folder to put contigs for new run
 my $reffile = shift @ARGV;				## reference file with gene ID and protein length info
+my $mode = shift @ARGV;
+my $platform = lc(shift @ARGV);
+my $trinity = shift @ARGV;
+my $thread = 4;
+if(!$trinity){$trinity = "";}
 
 ## read in blast result file
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
-my @subs = sort(grep(/^\w+$/, readdir SRC));
+my @subs = sort(grep(/^\w+/, readdir SRC));
+closedir SRC;
+print "$srcfolder\n";
+print join("\n", @subs), "\n";
 
-system("rm -rf 00.script/shell.script.rsem");
-system("mkdir -p 00.script/shell.script.rsem");
+system("rm -rf 00.script/13.rsem.script");
+system("mkdir -p 00.script/13.rsem.script");
 
 foreach my $sub (@subs){	## loop over parallized groups
     if($sub =~ /F$|Fu$|R$/){next;}
-	my $shell = "00.script/shell.script.rsem/rsem.$sub.sh";
+	my $shell = "00.script/13.rsem.script/rsem.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
 	
-    print SHL "#PBS -S /bin/bash\n";
-    print SHL "#PBS -q batch\n";
-    print SHL "#PBS -N 00.script/shell.script/rsem.bowtie2.single.$sub\n";
-    print SHL "#PBS -l nodes=1:ppn=2:AMD\n";
-    print SHL "#PBS -l walltime=48:00:00\n";
-    print SHL "#PBS -l mem=15gb\n";
+	if($platform eq "sapelo"){
+		print SHL "#PBS -S /bin/bash\n";
+		print SHL "#PBS -q batch\n";
+		print SHL "#PBS -N 00.script/shell.script/rsem.bowtie2.single.$sub\n";
+		print SHL "#PBS -l nodes=1:ppn=2:AMD\n";
+		print SHL "#PBS -l walltime=48:00:00\n";
+		print SHL "#PBS -l mem=15gb\n";
+		print SHL "\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
+	}elsif($platform eq "zcluster"){
+		print SHL "#!/bin/bash\n";
+	}else{
+		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
+	}
 
-    print SHL "\n";
-    print SHL "module load trinity/r20140717\n\n";
-    print SHL "cd \$PBS_O_WORKDIR\n";
+    my $command1 = 0;
+	my $t = $thread / 2;
+	if($platform eq "sapelo"){
+		$command1 = "/usr/local/apps/trinity/r20140717";
+	    print SHL "module load trinity/r20140717\n\n";
+    }elsif($platform eq "zcluster"){
+		$command1 = "/usr/local/trinity/r20140717";
+		print SHL "export LD_LIBRARY_PATH=/usr/local/gcc/4.7.1/lib:/usr/local/gcc/4.7.1/lib64:\${LD_LIBRARY_PATH}\n";
+		print SHL "export PATH=/usr/local/gmap-gsnap/latest/bin/:\${PATH}\n\n";
+	}else{
+		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
+	}
 
-    print SHL "#!/bin/bash\n";
-	print SHL "time /usr/local/apps/trinity/r20140717/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --left $srcfolder/$sub/$sub.R1.fastq_pairs_R1.fastq --right $srcfolder/$sub/$sub.R2.fastq_pairs_R2.fastq --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 --trinity_mode\n";
-		
-	#print SHL "time /usr/local/apps/trinity/r20140717/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --single $srcfolder/$sub/$sub.single --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 --trinity_mode\n";
-
+	if($mode eq "paired-end"){
+		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --left $srcfolder/$sub/$sub.R1.fastq --right $srcfolder/$sub/$sub.R2.fastq --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 $trinity\n";
+	}elsif($mode eq "single-end"){
+		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --single $srcfolder/$sub/$sub.fastq --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 $trinity\n";
+	}
+	
 	close SHL;
 	system("chmod u+x $shell");
-	system("qsub $shell");
+	if($platform eq "sapelo"){
+    	system("qsub $shell");
+	}elsif($platform eq "zcluster"){
+		system("qsub -q rcc-30d -pe thread $t $shell");
+	}else{
+		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
+	}
 
 }
 
