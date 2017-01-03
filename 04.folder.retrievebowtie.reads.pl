@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/04.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.0 04.retrieve.reads/03.bowtie.nucl/run.0 nucl bowtie.log/bowtie.run.0 Sapelo 10
+# run the script: time perl 00.script/04.folder.retrievebowtie.reads.pl 03.blast/03.bowtie.nucl/run.0 04.retrieve.reads/03.bowtie.nucl/run.0 nucl bowtie.log/bowtie.run.0 paired-end Sapelo 10
 
 use strict;
 system("echo 'Running 04.folder.retrievebowtie.reads.pl ....' >> job.monitor.txt");
@@ -9,6 +9,7 @@ my $srcfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
 my $seqtype = shift @ARGV;
 my $logfolder = shift @ARGV;
+my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
 my ($run) = $tgtfolder =~ /run\.([0-9]+)/;
@@ -23,12 +24,13 @@ while(1){
 	my @temp = @chks;
 	my $i = 0;
 	while(my $chk = shift @temp){
-		my @stderr = glob("bowtie.$seqtype.$chk.o*");
-		my @stdout = glob("bowtie.$seqtype.$chk.e*");
-		if(!($stderr[0] and $stdout[0])){
+		my @stderr = glob("bowtie.$seqtype.$chk.sh.o*");
+		my @stdout = glob("bowtie.$seqtype.$chk.sh.e*");
+		my @log = glob("00.script/$logfolder/$chk.done.*");
+		if(!($stderr[0] and $stdout[0] and $log[0])){
 			last; # job hasn't finished, no log file
 		}else{
-			system("grep -E 'ERROR|Error|error' bowtie.$seqtype.$chk.e* >> 00.script/$logfolder/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' bowtie.$seqtype.$chk.sh.e* >> 00.script/$logfolder/summary.error.log\n");
 			#system("echo 'success' > 00.script/$logfolder/bowtie.$seqtype.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
@@ -40,10 +42,10 @@ while(1){
 			while(my $chk = shift @temp){
 				if(!(-s "$srcfolder/$chk/bowtie.out.$chk.sam")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
-					system("rm -f bowtie.$seqtype.$chk.*");
+					#system("rm -f bowtie.$seqtype.$chk.*");
+					#system("rm -f 00.script/$logfolder/$chk.done.log");
 					system("echo 'Resubmitting the job: bowtie.$seqtype.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/$logfolder/bowtie.$seqtype.$chk.sh");
-						#last; # There are some jobs failed
+					#system("qsub 00.script/$logfolder/bowtie.$seqtype.$chk.sh");
 				}
 				else{
 					$i++;
@@ -80,7 +82,7 @@ foreach my $sub (@subs){
  	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N retrievebowtie.reads.$sub\n";
+	    print SHL "#PBS -N retrievebowtie.reads.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=12:00:00\n";
 	    print SHL "#PBS -l mem=40gb\n";
@@ -98,11 +100,18 @@ foreach my $sub (@subs){
 	if($run == 0){
 		$unmap = "both";
 	}
-	print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.sam $unmap $tgtfolder/$sub/retrieved.$sub.R1.fasta $tgtfolder/$sub/unmap.$sub.R1.fasta $tgtfolder/$sub/retrieved.$sub.R2.fasta $tgtfolder/$sub/unmap.$sub.R2.fasta\n";
+	if($mode eq "paired-end"){
+		print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.sam $unmap $tgtfolder/$sub/retrieved.$sub.R1.fasta $tgtfolder/$sub/unmap.$sub.R1.fasta $tgtfolder/$sub/retrieved.$sub.R2.fasta $tgtfolder/$sub/unmap.$sub.R2.fasta\n";
+	}elsif($mode eq "single-end"){
+		print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.sam $unmap $tgtfolder/$sub/retrieved.$sub.fasta $tgtfolder/$sub/unmap.$sub.R1.fasta\n";
+	}else{
+		die "Error: Please specify the mode as 'single-end' or 'paired-end'.";
+	}
 	if(-e "$srcfolder/$sub/bowtie.out.$sub.long.sam" and -s "$srcfolder/$sub/bowtie.out.$sub.long.sam"){
 		print SHL "time perl 00.script/04.retrievebowtie.reads.pl $srcfolder/$sub/bowtie.out.$sub.long.sam $unmap $tgtfolder/$sub/retrieved.$sub.long.fasta $tgtfolder/$sub/unmap.$sub.long.fasta\n";
 	}
 	
+	print SHL "touch 00.script/04.retrieve.script/run.$run/$sub.done.log\n";
 	close SHL;
 	system("chmod u+x $shell");
 	if($platform eq "sapelo"){

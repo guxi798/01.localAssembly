@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/01.fastq2fasta.folder.pl 01.data/01.Fastq 01.data/02.Fasta Sapelo
+# run the script: time perl 00.script/01.fastq2fasta.folder.pl 01.data/01.Fastq 01.data/02.Fasta paired-end Sapelo
 
 use strict;
 system("echo 'Running 01.fastq2fasta.folder.pl ....' >> job.monitor.txt");
@@ -7,6 +7,7 @@ system("echo 'Running 01.fastq2fasta.folder.pl ....' >> job.monitor.txt");
 ## read in parameters required by the script
 my $srcfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
+my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $thread = 1;
 
@@ -38,9 +39,9 @@ foreach my $sub (@subs){
 	}
 
 	print SHL "mkdir -p $tgtfolder/$sub\n";
-	if($sub =~ /F$|Fu$|R$/){
+	if($mode eq "paired-end" and $sub =~ /F$|Fu$|R$/){
 		print SHL "cp $srcfolder/$sub/$sub.fna $tgtfolder/$sub/\n";
-	}else{
+	}elsif($mode eq "paired-end"){
 		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq_pairs_R1.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta_pairs_R1.fasta\n";
 		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R2.fastq_pairs_R2.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R2.fasta_pairs_R2.fasta\n";
 		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq_singles.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta_singles.fasta\n";
@@ -48,6 +49,10 @@ foreach my $sub (@subs){
 		print SHL "sed -i \"s/\\/2//g\" $tgtfolder/$sub/$sub.R1.fasta_singles.fasta\n";
 		#print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R1.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R1.fasta\n";
 		#print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.R2.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.R2.fasta\n";
+	}elsif($mode eq "single-end"){
+		print SHL "time awk '1 == (NR) % 4 || 2 == (NR) % 4' $srcfolder/$sub/$sub.fastq | awk '{gsub(\"^@\", \">\", \$0); print \$0}' > $tgtfolder/$sub/$sub.fasta\n";
+	}else{
+		die "Error: Please specify the mode as 'single-end' or 'paired-end'.";
 	}
 	
 	close(SHL);

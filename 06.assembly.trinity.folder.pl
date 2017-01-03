@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/06.assembly.trinity.folder.pl 04.retrieve.reads/03.bowtie.nucl/run.0 06.assembly/03.bowtie.nucl/run.0 genome Sapelo 1
+# run the script: time perl 00.script/06.assembly.trinity.folder.pl 04.retrieve.reads/03.bowtie.nucl/run.0 06.assembly/03.bowtie.nucl/run.0 genome paired-end Sapelo 1
 
 use strict;
 system("echo 'Running 06.assembly.trinity.folder.pl ....' >> job.monitor.txt");
@@ -7,6 +7,7 @@ system("echo 'Running 06.assembly.trinity.folder.pl ....' >> job.monitor.txt");
 ## read in parameters required by the script
 my $srcfolder = shift @ARGV;
 my $tgtfolder = shift @ARGV;
+my $scale = shift @ARGV;
 my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $sleeptime = shift @ARGV;
@@ -20,7 +21,7 @@ opendir(CHK, $reffolder) or die "ERROR: Cannot open $reffolder: $!";
 my @chks = sort(grep(/^[0-9]+/, readdir(CHK)));
 
 =pod
-if($run == 0 and $mode eq 'genome'){
+if($run == 0 and $scale eq 'genome'){
 	my @temp = @chks;
 	my @R1 = ();
 	my @R2 = ();
@@ -47,13 +48,14 @@ while(1){
 	my @temp = @chks;
 	my $i = 0;
 	while(my $chk = shift @temp){
-		my @stderr = glob("retrievebowtie.reads.$chk.o*");
-		my @stdout = glob("retrievebowtie.reads.$chk.e*");
-		if(!($stderr[0] and $stdout[0])){
+		my @stderr = glob("retrievebowtie.reads.$chk.sh.o*");
+		my @stdout = glob("retrievebowtie.reads.$chk.sh.e*");
+		my @log = glob("00.script/04.retrieve.script/run.$run/$chk.done.*");
+		if(!($stderr[0] and $stdout[0] and $log[0])){
 			last; # job hasn't finished, no log file
 		}else{
 			#print "$stderr[0]\n$stdout[0]\n";
-			system("grep -E 'ERROR|Error|error' retrievebowtie.reads.$chk.e* >> 00.script/04.retrieve.script/run.$run/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' retrievebowtie.reads.$chk.sh.e* >> 00.script/04.retrieve.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/retrievebowtie.reads.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
@@ -63,12 +65,12 @@ while(1){
 		if(!-s "00.script/04.retrieve.script/run.$run/summary.error.log"){ # check if all jobs are successful
 			system("echo 'There is no error for all jobs' >> job.monitor.txt");
 			while(my $chk = shift @temp){
-				if(!(-s "$srcfolder/$chk/retrieved.$chk.R1.fasta" and -s "$srcfolder/$chk/retrieved.$chk.R2.fasta")){
+				if(!((-s "$srcfolder/$chk/retrieved.$chk.R1.fasta" and -s "$srcfolder/$chk/retrieved.$chk.R2.fasta") or (-s "$srcfolder/$chk/retrieved.$chk.fasta"))){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
-					system("rm -f retrievebowtie.reads.$chk.*");
+					#system("rm -f retrievebowtie.reads.$chk.*");
+					#system("rm -f 00.script/04.retrieve.script/run.$run/$chk.done.log");
 					system("echo 'Resubmitting the job: retrievebowtie.reads.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/04.retrieve.script/run.$run/retrievebowtie.reads.$chk.sh");
-						#last; # There are some jobs failed
+					#system("qsub 00.script/04.retrieve.script/run.$run/retrievebowtie.reads.$chk.sh");
 				}
 				else{
 					$i++;
@@ -104,7 +106,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N assembly.trinity.$sub\n";
+	    print SHL "#PBS -N assembly.trinity.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=120:00:00\n";
 	    print SHL "#PBS -l mem=",$memory,"gb\n";
@@ -130,11 +132,16 @@ foreach my $sub (@subs){
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 	
-	if(-e "$srcfolder/$sub/retrieved.$sub.long.fasta"){
+	if($mode eq "paired-end" and -e "$srcfolder/$sub/retrieved.$sub.long.fasta"){
 		print SHL "time $command1/Trinity --seqType fa --CPU $thread --JM ",$memory,"G --left $srcfolder/$sub/retrieved.$sub.R1.fasta --right $srcfolder/$sub/retrieved.$sub.R2.fasta --long_reads $srcfolder/$sub/retrieved.$sub.long.fasta --output $tgtfolder/$sub --min_contig_length 100 \n";
-	}else{
+	}elsif($mode eq "paired-end"){
 		print SHL "time $command1/Trinity --seqType fa --CPU $thread --JM ",$memory,"G --left $srcfolder/$sub/retrieved.$sub.R1.fasta --right $srcfolder/$sub/retrieved.$sub.R2.fasta --output $tgtfolder/$sub --min_contig_length 100 \n";
+	}elsif($mode eq "single-end"){
+		print SHL "time $command1/Trinity --seqType fa --CPU $thread --JM ",$memory,"G --single $srcfolder/$sub/retrieved.$sub.fasta --output $tgtfolder/$sub --min_contig_length 100 \n";
+	}else{
+		die "Error: Please specify the mode as 'single-end' or 'paired-end'.";
 	}
+	print SHL "touch 00.script/06.trinity.script/run.$run/$sub.done.log\n";
 	
 	close SHL;
 	system("chmod u+x $shell");

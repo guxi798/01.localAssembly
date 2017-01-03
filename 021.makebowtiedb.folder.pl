@@ -12,7 +12,7 @@ my $prerun = $run - 1;
 my $thread = 1;
 
 ## check if previous step has succesfully finished
-while(1){
+while($run > 0){
 	if(!(-e "00.script/10.transfer.script/run.$prerun/transfer.saturate.seq.log")){
 		sleep $sleeptime; # job hasn't finished, no log file
 	}else{ # job has finished
@@ -54,7 +54,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
     	print SHL "module load bowtie2/2.2.4\n";
 	}elsif($platform eq "zcluster"){
-		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH";
+		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
@@ -62,13 +62,14 @@ foreach my $sub (@subs){
 	print SHL "cd $tgtfolder/$sub\n";
 	print SHL "time bowtie2-build -f -q $sub.fasta $sub\n";
 	print SHL "cd ../../../../../\n";
+	print SHL "touch 00.script/02.makebowtiedb.script/run.$run/$sub.done.log\n";
 	
 	close(SHL);
 	system("chmod u+x $shell");
 	if($platform eq "sapelo"){
     	system("qsub $shell");
 	}elsif($platform eq "zcluster"){
-		system("qsub -q rcc-30d -pe thread $thread $shell");
+		system("qsub -q rcc-30d $shell");
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}

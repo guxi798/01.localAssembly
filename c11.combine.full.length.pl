@@ -3,7 +3,6 @@
 # run the script: time perl 00.script/c11.combine.full.length.pl 10.unmapped.reads.trinity/full.length.contigs.blastn.xml.out 10.unmapped.reads.trinity/full.length.contigs.fasta 10.unmapped.reads.trinity/temp.fasta
 
 use strict;
-use strict;
 use Bio::SearchIO;
 use List::Util qw(sum);
 

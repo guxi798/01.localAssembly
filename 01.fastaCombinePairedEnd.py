@@ -42,8 +42,6 @@ class Fasta(object):
     def __init__(self, name, seq):#, name2, qual):
         self.name = name
         self.seq = seq
-        #self.name2 = name2
-        #self.qual = qual
 
     def getShortname(self, separator):
         self.temp = self.name.split(separator)
@@ -53,8 +51,6 @@ class Fasta(object):
     def write_to_file(self, handle):
         handle.write(self.name + "\n")
         handle.write(self.seq + "\n")
-        #handle.write(self.name2 + "\n")
-        #handle.write(self.qual + "\n")
 
 class Fastq(object):
     """Fastq object with name and sequence
@@ -95,9 +91,7 @@ def fasta_parser(infile):
                 break
 
             seq = f.readline().strip()
-            #name2 = f.readline().strip()
-            #qual = f.readline().strip()
-            yield Fasta(name, seq)#, name2, qual)
+            yield Fasta(name, seq)
 
 def fastq_parser(infile):
     """Takes a fastq file infile and returns a fasta object iterator

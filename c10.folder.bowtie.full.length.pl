@@ -28,19 +28,18 @@ foreach my $sub (@subs){
 		print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 		print SHL "#PBS -l walltime=48:00:00\n";
 		print SHL "#PBS -l mem=40gb\n";
+		print SHL "cd \$PBS_O_WORKDIR\n";
 	}elsif($platform eq "zcluster"){
 		print SHL "#!/bin/bash\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 	
-	print SHL "\n";
-	print SHL "cd \$PBS_O_WORKDIR\n";
 	if($platform eq "sapelo"){
     	print SHL "module load bowtie2/2.2.4\n";
 	}elsif($platform eq "zcluster"){
-		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH";
-		$thread /= 2;
+		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH\n";
+		$thread = 2;
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}

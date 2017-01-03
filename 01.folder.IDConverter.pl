@@ -1,11 +1,12 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/01.folder.IDConverter.pl  01.data/02.Fasta Sapelo
+# run the script: time perl 00.script/01.folder.IDConverter.pl 01.data/02.Fasta paired-end Sapelo
 
 use strict;
 system("echo 'Running 01.folder.IDConverter.pl ....' >> job.monitor.txt");
 
 ## read in parameters required by the script
 my $srcfolder = shift @ARGV;
+my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $thread = 1;
 
@@ -37,13 +38,17 @@ foreach my $sub (@subs){
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
    
-	if($sub =~ /F$|Fu$|R$/){
+	if($mode eq "paired-end" and $sub =~ /F$|Fu$|R$/){
     	print SHL "time cat $srcfolder/$sub/$sub.fna | awk '{if(\$_ ~ /^>/){count++; print \">\"count} else{print \$_}}' > $srcfolder/$sub/$sub.simple.fasta\n";
-    }else{
+    }elsif($mode eq "paired-end"){
 		print SHL "time cat $srcfolder/$sub/$sub.R1.fasta_pairs_R1.fasta | awk '{if(NR%2==0){print \$_} else{print \">\"NR/2+0.5}}' > $srcfolder/$sub/$sub.R1.fasta_simple.fasta\n";
 		print SHL "time cat $srcfolder/$sub/$sub.R2.fasta_pairs_R2.fasta | awk '{if(NR%2==0){print \$_} else{print \">\"NR/2+0.5}}' > $srcfolder/$sub/$sub.R2.fasta_simple.fasta\n";
 		print SHL "time cat $srcfolder/$sub/$sub.R1.fasta_singles.fasta | awk '{if(NR%2==0){print \$_} else{print \">\"NR/2+0.5}}' > $srcfolder/$sub/$sub.singles.fasta_simple.fasta\n";
-    }
+    }elsif($mode eq "single-end"){
+		print SHL "time cat $srcfolder/$sub/$sub.fasta | awk '{if(NR%2==0){print \$_} else{print \">\"NR/2+0.5}}' > $srcfolder/$sub/$sub.simple.fasta\n";
+	}else{
+		die "Error: Please specify the mode as 'single-end' or 'paired-end'.";
+	}
 	
 	close SHL;
 	system("chmod u+x $shell");

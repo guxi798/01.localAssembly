@@ -7,6 +7,7 @@ use strict;
 my $srcfolder = shift @ARGV;			## reads file
 my $tgtfolder = shift @ARGV;			## target folder to put contigs for new run
 my $reffile = shift @ARGV;				## reference file with gene ID and protein length info
+my $method = shift @ARGV;
 my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $trinity = shift @ARGV;
@@ -51,15 +52,16 @@ foreach my $sub (@subs){	## loop over parallized groups
     }elsif($platform eq "zcluster"){
 		$command1 = "/usr/local/trinity/r20140717";
 		print SHL "export LD_LIBRARY_PATH=/usr/local/gcc/4.7.1/lib:/usr/local/gcc/4.7.1/lib64:\${LD_LIBRARY_PATH}\n";
-		print SHL "export PATH=/usr/local/gmap-gsnap/latest/bin/:\${PATH}\n\n";
+		print SHL "export PATH=/usr/local/gmap-gsnap/latest/bin/:\${PATH}\n";
+		print SHL "export PATH=\${PATH}:/usr/local/cd-hit/4.6.1-2012-08-27/:/usr/local/rsem/1.2.20/:/usr/local/express/1.5.1/\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
 
 	if($mode eq "paired-end"){
-		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --left $srcfolder/$sub/$sub.R1.fastq --right $srcfolder/$sub/$sub.R2.fastq --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 $trinity\n";
+		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --left $srcfolder/$sub/$sub.R1.fastq_pairs_R1.fastq --right $srcfolder/$sub/$sub.R2.fastq_pairs_R2.fastq --single $srcfolder/$sub/$sub.R1.fastq_singles.fastq --output_dir $tgtfolder/$sub --est_method $method --aln_method bowtie2 $trinity\n";
 	}elsif($mode eq "single-end"){
-		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --single $srcfolder/$sub/$sub.fastq --output_dir $tgtfolder/$sub --est_method RSEM --aln_method bowtie2 $trinity\n";
+		print SHL "time $command1/util/align_and_estimate_abundance.pl --transcripts $reffile --seqType fq --single $srcfolder/$sub/$sub.fastq --output_dir $tgtfolder/$sub --est_method $method --aln_method bowtie2 $trinity\n";
 	}
 	
 	close SHL;

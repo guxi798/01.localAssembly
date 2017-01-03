@@ -26,7 +26,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N makebowtiedb.$sub\n";
+	    print SHL "#PBS -N makebowtiedb.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";
@@ -41,7 +41,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
     	print SHL "module load bowtie2/2.2.4\n";
 	}elsif($platform eq "zcluster"){
-		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH";
+		print SHL "PATH=/usr/local/bowtie2/2.2.3/bin/:\$PATH\n";
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
@@ -49,6 +49,7 @@ foreach my $sub (@subs){
 	print SHL "cd $srcfolder/$sub\n";
 	print SHL "time bowtie2-build -f -q $sub.fasta $base\n";
 	print SHL "cd ../../../../../\n";
+	print SHL "touch 00.script/02.makebowtiedb.script/run.$run/$sub.done.log\n";
 		
 	close(SHL);
 		
@@ -56,7 +57,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
     	system("qsub $shell");
 	}elsif($platform eq "zcluster"){
-		system("qsub -q rcc-30d -pe thread $thread $shell");
+		system("qsub -q rcc-30d $shell");
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}

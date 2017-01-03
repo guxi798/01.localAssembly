@@ -6,6 +6,7 @@ system("echo 'Running 01.folder.fastaCombinePairedEnd.pl ....' >> job.monitor.tx
 
 ## read in parameters required by the script
 my $srcfolder = shift @ARGV;
+my $separater = shift @ARGV || " ";
 my $platform = lc(shift @ARGV);
 my $thread = 1;
 
@@ -47,7 +48,7 @@ foreach my $sub (@subs){
 	}else{
 		die "Please provide the platform: 'Sapelo' or 'Zcluster'";
 	}
-	print SHL "time python2.7 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fastq $srcfolder/$sub/$sub.R2.fastq /\n";
+	print SHL "time python2.7 00.script/01.fastaCombinePairedEnd.py $srcfolder/$sub/$sub.R1.fastq $srcfolder/$sub/$sub.R2.fastq $separater\n";
 	
 	close SHL;
 	

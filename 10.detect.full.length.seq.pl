@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# run the script: time perl 00.script/101.transfer.saturate.seq.pl 10.unmapped.reads.trinity/Trinity.new.fasta 10.unmapped.reads.trinity/blastx.out 10.unmapped.reads.trinity 01.data/04.GeneOfInterest/GeneID.v1.txt pct 0.02 
+# run the script: time perl 00.script/10.detect.full.length.seq.pl 10.unmapped.reads.trinity/Trinity.new.fasta 10.unmapped.reads.trinity/blastx.out 10.unmapped.reads.trinity 01.data/04.GeneOfInterest/GeneID.v1.txt pct 0.02 
 
 use strict;
 
@@ -7,25 +7,31 @@ use Bio::SeqIO;
 use Bio::SearchIO;
 
 ## read in parameters required by the script
-my $usage = "usage: $0 blast+.outfmt6 query.fasta db.fasta output_folder [output_prefix=NameOfBlastFileHere] [mode=abs|pct] [cutoff=NumericCutoff]\n\n";
+my $usage = "usage: $0 blast+.outfmt5.xml query.fasta db.fasta [output_prefix=NameOfBlastFileHere] [verbose=0]\n\n";
 
-my $blastfile = shift @ARGV or die $usage;              ## blast result
+my $blastfile = shift @ARGV or die $usage;              ## blast result folder
 my $srcfile = shift @ARGV or die $usage;				## assembled contig file
 my $dbfile = shift @ARGV or die $usage;
-my $tgtfolder = shift @ARGV or die $usage;              ## target folder
+my $tgtfolder = shift @ARGV or die $usage;              ## target folder to put contigs for new run
 my $output_prefix = shift @ARGV || "$blastfile";
-my $mode = shift @ARGV || "pct";					## abs: absolute value; pct: percent value
-my $cutoff = shift @ARGV || "0.02";                 ## absolute AA number, or percent
+my $mode = shift @ARGV or die $usage;					## abs: absolute value; pct: percent value
+my $cutoff = shift @ARGV or die $usage;                 ## absolute AA number, or percent
+my $verbose = shift @ARGV || 0;
+my ($run) = $srcfile =~ /\/run\.([0-9]+)/;
+my $newrun = $run + 1;
+system("mkdir -p 00.script/shell.script/");
 
+## record file: error and output file
 system("mkdir -p $tgtfolder");
-my $logfile = "$tgtfolder/detect.full.length.log";
-
-open(TGT1, ">$tgtfolder/$output_prefix.full.contigs.nucl.fasta") or die "ERROR: Cannot write $tgtfolder/$output_prefix.full.length.contigs.fasta: $!";
-open(TGT2, ">$tgtfolder/$output_prefix.incomplete.contigs.nucl.fasta") or die "ERROR: Cannot write $tgtfolder/$output_prefix.incomplete.fasta: $!";
-open(TGT3, ">$tgtfolder/$output_prefix.unmapped.contigs.nucl.fasta");
-open(PRO1, ">$tgtfolder/$output_prefix.full.contigs.prot.fasta") or die "ERROR: Cannot write $tgtfolder/$output_prefix.full.length.contigs.fasta: $!";
-open(PRO2, ">$tgtfolder/$output_prefix.incomplete.contigs.prot.fasta") or die "ERROR: Cannot write $tgtfolder/$output_prefix.incomplete.fasta: $!";
-
+open(FULN, ">$tgtfolder/$output_prefix.full.length.contigs.nucl.fasta") or die "ERROR: Cannot write $tgtfolder/full.length.contigs.fasta: $!";
+open(FULP, ">$tgtfolder/$output_prefix.full.length.contigs.prot.fasta") or die "ERROR: Cannot write $tgtfolder/full.length.contigs.fasta: $!";
+if($verbose == 1){
+	open(INC, ">$tgtfolder/$output_prefix.incomplete.contigs.nucl.fasta") or die "ERROR: Cannot write $tgtfolder/incomplete.fasta: $!";
+}elsif($verbose == 2){
+	open(INC, ">$tgtfolder/$output_prefix.incomplete.contigs.nucl.fasta") or die "ERROR: Cannot write $tgtfolder/incomplete.fasta: $!";
+	open(UNM, ">$tgtfolder/$output_prefix.unmapped.contigs.nucl.fasta");
+}
+## read in blast results
 open(BLS, $blastfile);
 
 ## read in seq length
@@ -56,11 +62,10 @@ my %full_length = ();
 my %incomplete_length = ();
 
 while(my $line = <BLS>){
-	chomp $line;
-	my @lines = split(/\t/, $line);
-	my $qname = $lines[0];
-	my $qlen = $query_length{$qname};
-	my $hitname = $lines[1];
+    my @lines = split(/\s+/, $line);
+    my $qname = $lines[0];
+    my $qlen = $query_length{$qname};
+    my $hitname = $lines[1];
 	my $hitlen = $db_length{$hitname};
 	my $qstart = $lines[6];
 	my $qend = $lines[7];
@@ -69,7 +74,7 @@ while(my $line = <BLS>){
 	my $evalue = $lines[10];
 	my $bits = $lines[11];
 	my $frame = 0;
-
+	
 	## find open reading frame
 	if($qstart < $qend and $hitstart < $hitend){
 		if($qstart % 3 == 1){
@@ -91,7 +96,7 @@ while(my $line = <BLS>){
 	
 	my $left = ($hitstart, $hitend)[$hitstart > $hitend];		## subject start
 	my $right = ($hitstart, $hitend)[$hitstart < $hitend];		## subject end
-
+		
 	if($left == 1 and $right == $hitlen){
 		if(not exists $full_length{$qname} or ($bits > $full_length{$qname}->{bits})){
 			$full_length{$qname} = { query_id => $qname,
@@ -138,6 +143,7 @@ while(my $line = <BLS>){
 	}        
 }
 
+
 my $seqio_obj = Bio::SeqIO->new(-file => $srcfile, -format => "fasta");
 
 while(my $seq_obj = $seqio_obj->next_seq){
@@ -147,65 +153,55 @@ while(my $seq_obj = $seqio_obj->next_seq){
 	my $seqlen = $temp[0];
 	
 	if(exists $full_length{$id}){
-		my ($proseq, $qlen) = &Find_ORF($seq_obj, $full_length{$id}->{frame});
-		print TGT1 ">$id len=", $full_length{$id}->{query_len}, " ", 
+		my ($fullseq, $proseq, $qlen) = &Find_ORF($seq_obj, $full_length{$id}->{frame});
+		print FULN ">$id len=", $full_length{$id}->{query_len}, " ", 
 					$full_length{$id}->{hit_id}, " ",
 					$full_length{$id}->{hit_len}, " ", 
 					$qlen, " blast_full ", 
-					$full_length{$id}->{frame}, "\n";
-		print TGT1 "$seq\n";
-		print PRO1 ">$id len=", $full_length{$id}->{query_len}, " ", 
-					$full_length{$id}->{hit_id}, " ",
-					$full_length{$id}->{hit_len}, " ", 
-					$qlen, " blast_full ", 
-					$full_length{$id}->{frame}, "\n";
-		print PRO1 "$proseq\n";
+					$full_length{$id}->{frame}, " $newrun\n";
+		print FULN "$seq\n";
+		
+		print FULP ">$id $qlen\n";
+		print FULP "$fullseq\n";
 	}elsif(exists $incomplete_length{$id}){
 		my $hitlen = $incomplete_length{$id}->{hit_len};
-		my ($proseq, $qlen) = &Find_ORF($seq_obj, $incomplete_length{$id}->{frame});
+		my ($fullseq, $proseq, $qlen) = &Find_ORF($seq_obj, $incomplete_length{$id}->{frame});
 		
 		if(($mode eq "abs" and $qlen > ($hitlen-$cutoff)) || ($mode eq "pct" and ($qlen/$hitlen) > (1-$cutoff))){
 				## consider as full assembled contig
-				print TGT1 ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
+				print FULN ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
 						$incomplete_length{$id}->{hit_id}, " ",
 						$incomplete_length{$id}->{hit_len}, " ", 
 						$qlen, " infer_full ", 
-						$incomplete_length{$id}->{frame}, "\n";
-				print TGT1 "$seq\n";
-				print PRO1 ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
+						$incomplete_length{$id}->{frame}, " $newrun\n";
+				print FULN "$seq\n";
+				print FULP ">$id len=$qlen", 
 						$incomplete_length{$id}->{hit_id}, " ",
 						$incomplete_length{$id}->{hit_len}, " ", 
-						$qlen, " infer_full ", 
 						$incomplete_length{$id}->{frame}, "\n";
-				print PRO1 "$proseq\n";
-		}elsif($mode eq "abs" or $mode eq "pct"){
-				print TGT2 ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
+				print FULP "$fullseq\n";
+		}elsif($mode eq "abs" or $mode eq "pct" and $verbose == 1){
+				print INC ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
 						$incomplete_length{$id}->{hit_id}, " ",
 						$incomplete_length{$id}->{hit_len}, " ", 
 						$qlen, " ", 
 						$incomplete_length{$id}->{frame}, "\n";
-				print TGT2 "$seq\n";
-				print PRO2 ">$id len=", $incomplete_length{$id}->{query_len}, " ", 
-						$incomplete_length{$id}->{hit_id}, " ",
-						$incomplete_length{$id}->{hit_len}, " ", 
-						$qlen, " ", 
-						$incomplete_length{$id}->{frame}, "\n";
-				print PRO2 "$proseq\n";
-		}else{
-			print "ERROR: Please specify correct mode: abs or pct\n";
-			die;
-		} ## mode if else
-	}else{
-		print TGT3 ">$id $seqlen\n";
-		print TGT3 "$seq\n";
+				print INC "$seq\n";
+		}
+	}elsif($verbose == 2){
+		print UNM ">$id $seqlen\n";
+		print UNM "$seq\n";
 	}
 }
 
-close TGT1;
-close TGT2;
-close TGT3;
-close PRO1;
-close PRO2;
+close FULN;
+close FULP;
+if($verbose == 1){
+	close INC;
+}elsif($verbose == 2){
+	close INC;
+	close UNM;
+}
 
 ########################
 sub Find_ORF{
@@ -242,7 +238,7 @@ sub Find_ORF{
 	$prolen = length($protein);
 	
 	## return value
-	return ($pro_seq, $prolen);
+	return ($pro_seq, $protein, $prolen);
 }
 
 

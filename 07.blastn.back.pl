@@ -27,7 +27,7 @@ foreach my $sub (@subs){
     if($platform eq "sapelo"){
     	print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N blastn.back.$sub\n";
+	    print SHL "#PBS -N blastn.back.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";

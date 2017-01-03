@@ -11,6 +11,7 @@ my $mode = shift @ARGV;
 my $platform = lc(shift @ARGV);
 my $thread = 1;
 my $scriptfolder = "00.script/14.bowtie.script";
+my $default = $mode;
 
 ## read in blast result file
 opendir(SRC, $srcfolder) or die "ERROR: Cannot open $srcfolder: $!";
@@ -25,6 +26,8 @@ foreach my $sub (@subs){	## loop over parallized groups
 	if($sub =~ /F$|Fu$|R$/){
 		$mode = 'single-end'; 
 		$file = "$sub.fna";
+	}else{
+		$mode = $default;
 	}
  	my $shell = "$scriptfolder/bowtie.$sub.sh";
 	open(SHL, ">$shell") or die "ERROR: Cannot write $shell: $!";
@@ -54,7 +57,7 @@ foreach my $sub (@subs){	## loop over parallized groups
 
 	if($mode eq "paired-end"){
 		print SHL "mkdir -p $tgtfolder/$sub\n";
-		print SHL "time bowtie2 -x $reffile -p $thread -1 $srcfolder/$sub/$sub.R1.fastq -2 $srcfolder/$sub/$sub.R2.fastq -S $tgtfolder/$sub/$sub.sam\n";
+		print SHL "time bowtie2 -x $reffile -p $thread -1 $srcfolder/$sub/$sub.R1.fastq_pairs_R1.fastq -2 $srcfolder/$sub/$sub.R2.fastq_pairs_R2.fastq -U $srcfolder/$sub/$sub.R1.fastq_singles.fastq -S $tgtfolder/$sub/$sub.sam\n";
 	}elsif($mode eq "single-end"){
 		print SHL "mkdir -p $tgtfolder/$sub\n";
 		if($sub =~ /F$|Fu$|R$/){

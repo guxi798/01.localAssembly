@@ -23,12 +23,13 @@ while(1){
 	my @temp = @chks;
 	my $i = 0;
 	while(my $chk = shift @temp){
-		my @stderr = glob("assembly.trinity.$chk.o*");
-		my @stdout = glob("assembly.trinity.$chk.e*");
-		if(!($stderr[0] and $stdout[0])){
+		my @stderr = glob("assembly.trinity.$chk.sh.o*");
+		my @stdout = glob("assembly.trinity.$chk.sh.e*");
+		my @log = glob("00.script/06.trinity.script/run.$run/$chk.done.*");
+		if(!($stderr[0] and $stdout[0] and $log[0])){
 			last; # job hasn't finished, no log file
 		}else{
-			system("grep -E 'ERROR|Error|error' assembly.trinity.$chk.e* >> 00.script/06.trinity.script/run.$run/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' assembly.trinity.$chk.sh.e* >> 00.script/06.trinity.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/assembly.trinity.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
@@ -40,11 +41,10 @@ while(1){
 			while(my $chk = shift @temp){
 				if(!(-e "$srcfolder/$chk/Trinity.fasta")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
-					system("rm -f assembly.trinity.$chk.*");
-					#system("rm -r $srcfolder/$chk");
+					#system("rm -f assembly.trinity.$chk.*");
+					#system("rm -f 00.script/06.trinity.script/run.$run/$chk.done.log");
 					system("echo 'Resubmitting the job: assembly.trinity.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/06.trinity.script/run.$run/assembly.trinity.$chk.sh");
-					#last; # There are some jobs failed
+					#system("qsub 00.script/06.trinity.script/run.$run/assembly.trinity.$chk.sh");
 				}
 				else{
 					$i++;
@@ -83,7 +83,7 @@ foreach my $sub (@subs){
 	if($platform eq "sapelo"){
 	    print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N truncate.header.$sub\n";
+	    print SHL "#PBS -N truncate.header.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";
@@ -96,6 +96,7 @@ foreach my $sub (@subs){
 	}
 
 	print SHL "time perl 00.script/06.truncate.header.pl $srcfolder/$sub/Trinity.fasta $srcfolder/$sub/Trinity.new.fasta\n\n";
+	print SHL "touch 00.script/06.truncate.script/run.$run/$sub.done.log\n";
 	
 	close SHL;
 	system("chmod u+x $shell");

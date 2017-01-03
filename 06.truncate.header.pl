@@ -22,7 +22,7 @@ foreach my $line (<SRC>){
 			my $pergc = sprintf "%.2f", $gc/$len*100;
 			$pre = $contig." GC=".$pergc;
 			print TGT "$pre\n";
-			print TGT join("\n", @seq), "\n";
+			print TGT join("", @seq), "\n";
 		}
 		$contig = $lines[0]." ".$lines[1];
 		@seq = ();

@@ -26,6 +26,7 @@ close REF;
 open(SRC, $srcfile);
 open(TGT, ">$tgtfile");
 
+my $count = 0;
 while(my $line = <SRC>){
 	chomp $line;
 	if($line =~ /^>/){
@@ -35,10 +36,12 @@ while(my $line = <SRC>){
 		my $seqlen = $lines[1];
 		my $gene = $lines[2];
 		my $run = pop @lines;
+		$run = $run - 1;
 		#print "$run\t$group\t$contig\n";
 		if(exists $hash{$run}{$gene}{$contig}){
+			$count ++;
 			#print "I'm here\n";
-			print TGT ">$contig $seqlen $gene $run\n";
+			print TGT ">$contig.$count $seqlen $gene $run\n";
 			$line = <SRC>;
 			print TGT "$line";
 		}

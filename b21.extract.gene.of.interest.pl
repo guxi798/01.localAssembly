@@ -44,7 +44,8 @@ foreach my $line (<REF>){	# for each GOI
 	my $prolen = ${$hash{$lines[0]}}[0];
 	my $group = ${$hash{$lines[0]}}[1];
 	my $expr = ${$hash{$lines[0]}}[2];
-	system("echo \">$lines[0]	$lines[1]	ProLen=$prolen	$group $expr\" >> $tgtfile1");
+	#system("echo \">$lines[0]	$lines[1]	ProLen=$prolen	$group $expr\" >> $tgtfile1");
+	system("echo \">$lines[0]	$lines[1]	ProLen=$prolen	$group\" >> $tgtfile1");
 	system("echo \"\@Trinity\" >> $tgtfile1");
 	system("grep \"$lines[0]\" $blastfile >> $tgtfile1");
 }

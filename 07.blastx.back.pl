@@ -27,12 +27,13 @@ while(1){
 	my @temp = @chks;
 	my $i = 0;
 	while(my $chk = shift @temp){
-		my @stderr = glob("truncate.header.$chk.o*");
-		my @stdout = glob("truncate.header.$chk.e*");
-		if(!($stderr[0] and $stdout[0])){
+		my @stderr = glob("truncate.header.$chk.sh.o*");
+		my @stdout = glob("truncate.header.$chk.sh.e*");
+		my @log = glob("00.script/06.truncate.script/run.$run/$chk.done.*");
+		if(!($stderr[0] and $stdout[0] and $log[0])){
 			last; # job hasn't finished, no log file
 		}else{
-			system("grep -E 'ERROR|Error|error' truncate.header.$chk.e* >> 00.script/06.truncate.script/run.$run/summary.error.log\n");
+			system("grep -E 'ERROR|Error|error' truncate.header.$chk.sh.e* >> 00.script/06.truncate.script/run.$run/summary.error.log\n");
 			#system("echo 'success' > 00.script/shell.script/truncate.header.$chk.log\n");
 			$count ++; # job has finished, add one count
 		}
@@ -44,9 +45,10 @@ while(1){
 			while(my $chk = shift @temp){
 				if(!(-s "$srcfolder/$chk/Trinity.new.fasta")){
 					system("echo 'There is no output file for $chk' >> job.monitor.txt");
-					system("rm -f truncate.header.$chk.*");
+					#system("rm -f truncate.header.$chk.*");
+					#system("rm -f 00.script/06.truncate.script/run.$run/$chk.done.log");
 					system("echo 'Resubmitting the job: truncate.header.$chk.sh' >> job.monitor.txt");
-					system("qsub 00.script/06.truncate.script/run.$run/truncate.header.$chk.sh");
+					#system("qsub 00.script/06.truncate.script/run.$run/truncate.header.$chk.sh");
 					#last; # There are some jobs failed
 				}
 				else{
@@ -84,7 +86,7 @@ foreach my $sub (@subs){
     if($platform eq "sapelo"){
     	print SHL "#PBS -S /bin/bash\n";
 	    print SHL "#PBS -q batch\n";
-	    print SHL "#PBS -N blastx.back.$sub\n";
+	    print SHL "#PBS -N blastx.back.$sub.sh\n";
 	    print SHL "#PBS -l nodes=1:ppn=$thread:AMD\n";
 	    print SHL "#PBS -l walltime=1:00:00\n";
 	    print SHL "#PBS -l mem=2gb\n";
@@ -107,7 +109,8 @@ foreach my $sub (@subs){
 	print SHL "mkdir -p $tgtfolder/$sub\n";
 	print SHL "time $command1/blastx -db $dbfolder/$sub/$sub.fasta -query $srcfolder/$sub/Trinity.new.fasta -out $tgtfolder/$sub/$sub.contigs.blast.out -evalue 1e-5  -outfmt 6 -num_threads 1 -max_target_seqs 1\n ";
 	print SHL "time $command1/blastx -db $dbfolder/$sub/$sub.fasta -query $srcfolder/$sub/Trinity.new.fasta -out $tgtfolder/$sub/$sub.contigs.blast.xml.out -evalue 1e-5  -outfmt 5 -num_threads 1 -max_target_seqs 1\n ";
-
+	print SHL "touch 00.script/07.blastx.script/run.$run/$sub.done.log\n";
+	
 	close(SHL);
 	system("chmod u+x $shell");
 	if($platform eq "sapelo"){
